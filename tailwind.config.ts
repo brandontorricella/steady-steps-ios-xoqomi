@@ -23,7 +23,7 @@ export default {
   				'sans-serif'
   			],
   			sans: [
-  				'Source Sans Pro',
+  				'Montserrat',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -36,7 +36,7 @@ export default {
   				'sans-serif'
   			],
   			serif: [
-  				'Source Serif Pro',
+  				'Cormorant Garamond',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
@@ -45,7 +45,7 @@ export default {
   				'serif'
   			],
   			mono: [
-  				'Source Code Pro',
+  				'IBM Plex Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
@@ -179,7 +179,7 @@ export default {
   					transform: 'translateY(-5px)'
   				}
   			},
-  			'celebrate': {
+  			celebrate: {
   				'0%': {
   					transform: 'scale(1)'
   				},
@@ -205,7 +205,7 @@ export default {
   			'slide-up': 'slide-up 0.5s ease-out',
   			'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
   			'bounce-gentle': 'bounce-gentle 1s ease-in-out infinite',
-  			'celebrate': 'celebrate 0.6s ease-out'
+  			celebrate: 'celebrate 0.6s ease-out'
   		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',
