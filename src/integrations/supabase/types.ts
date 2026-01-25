@@ -14,7 +14,309 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      buddy_connections: {
+        Row: {
+          buddy_id: string
+          created_at: string | null
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          buddy_id: string
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          buddy_id?: string
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buddy_connections_buddy_id_fkey"
+            columns: ["buddy_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buddy_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          messages: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          messages?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          messages?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_checkins: {
+        Row: {
+          activity_completed: boolean | null
+          checkin_completed: boolean | null
+          created_at: string | null
+          date: string
+          id: string
+          library_habits_completed: string[] | null
+          mood: string | null
+          nutrition_responses: Json | null
+          points_earned: number | null
+          user_id: string
+        }
+        Insert: {
+          activity_completed?: boolean | null
+          checkin_completed?: boolean | null
+          created_at?: string | null
+          date: string
+          id?: string
+          library_habits_completed?: string[] | null
+          mood?: string | null
+          nutrition_responses?: Json | null
+          points_earned?: number | null
+          user_id: string
+        }
+        Update: {
+          activity_completed?: boolean | null
+          checkin_completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          library_habits_completed?: string[] | null
+          mood?: string | null
+          nutrition_responses?: Json | null
+          points_earned?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_checkins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          active_library_habits: string[] | null
+          activity_level: string | null
+          coach_conversations_count: number | null
+          created_at: string | null
+          current_activity_goal_minutes: number | null
+          current_level: number | null
+          current_stage: string | null
+          current_streak: number | null
+          daily_time_commitment: string | null
+          email: string
+          evening_reminder_time: string | null
+          first_name: string | null
+          id: string
+          last_checkin_date: string | null
+          longest_streak: number | null
+          midday_nudge_enabled: boolean | null
+          morning_reminder_time: string | null
+          nutrition_questions_count: number | null
+          onboarding_completed: boolean | null
+          primary_goal: string | null
+          primary_nutrition_challenge: string | null
+          progression_week: number | null
+          streak_at_loss: number | null
+          subscription_end_date: string | null
+          subscription_product_id: string | null
+          subscription_status: string | null
+          total_activity_completions: number | null
+          total_checkins: number | null
+          total_nutrition_habits_completed: number | null
+          total_perfect_days: number | null
+          total_points: number | null
+          trial_start_date: string | null
+          updated_at: string | null
+          weekly_summary_enabled: boolean | null
+        }
+        Insert: {
+          active_library_habits?: string[] | null
+          activity_level?: string | null
+          coach_conversations_count?: number | null
+          created_at?: string | null
+          current_activity_goal_minutes?: number | null
+          current_level?: number | null
+          current_stage?: string | null
+          current_streak?: number | null
+          daily_time_commitment?: string | null
+          email: string
+          evening_reminder_time?: string | null
+          first_name?: string | null
+          id: string
+          last_checkin_date?: string | null
+          longest_streak?: number | null
+          midday_nudge_enabled?: boolean | null
+          morning_reminder_time?: string | null
+          nutrition_questions_count?: number | null
+          onboarding_completed?: boolean | null
+          primary_goal?: string | null
+          primary_nutrition_challenge?: string | null
+          progression_week?: number | null
+          streak_at_loss?: number | null
+          subscription_end_date?: string | null
+          subscription_product_id?: string | null
+          subscription_status?: string | null
+          total_activity_completions?: number | null
+          total_checkins?: number | null
+          total_nutrition_habits_completed?: number | null
+          total_perfect_days?: number | null
+          total_points?: number | null
+          trial_start_date?: string | null
+          updated_at?: string | null
+          weekly_summary_enabled?: boolean | null
+        }
+        Update: {
+          active_library_habits?: string[] | null
+          activity_level?: string | null
+          coach_conversations_count?: number | null
+          created_at?: string | null
+          current_activity_goal_minutes?: number | null
+          current_level?: number | null
+          current_stage?: string | null
+          current_streak?: number | null
+          daily_time_commitment?: string | null
+          email?: string
+          evening_reminder_time?: string | null
+          first_name?: string | null
+          id?: string
+          last_checkin_date?: string | null
+          longest_streak?: number | null
+          midday_nudge_enabled?: boolean | null
+          morning_reminder_time?: string | null
+          nutrition_questions_count?: number | null
+          onboarding_completed?: boolean | null
+          primary_goal?: string | null
+          primary_nutrition_challenge?: string | null
+          progression_week?: number | null
+          streak_at_loss?: number | null
+          subscription_end_date?: string | null
+          subscription_product_id?: string | null
+          subscription_status?: string | null
+          total_activity_completions?: number | null
+          total_checkins?: number | null
+          total_nutrition_habits_completed?: number | null
+          total_perfect_days?: number | null
+          total_points?: number | null
+          trial_start_date?: string | null
+          updated_at?: string | null
+          weekly_summary_enabled?: boolean | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_first_week: boolean | null
+          created_at: string | null
+          id: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_id: string
+          status: string | null
+        }
+        Insert: {
+          completed_first_week?: boolean | null
+          created_at?: string | null
+          id?: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string | null
+        }
+        Update: {
+          completed_first_week?: boolean | null
+          created_at?: string | null
+          id?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

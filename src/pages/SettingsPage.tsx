@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { getUserProfile, saveUserProfile, clearAllData } from '@/lib/storage';
 import { UserProfile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Bell, Clock, Trash2, AlertTriangle } from 'lucide-react';
+import { Bell, Trash2, AlertTriangle, CreditCard, LogOut } from 'lucide-react';
+import { BottomNavigation } from '@/components/navigation/BottomNavigation';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +22,6 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export const SettingsPage = () => {
-  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -40,17 +41,20 @@ export const SettingsPage = () => {
     window.location.reload();
   };
 
+  const handleManageSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank');
+    } catch (error) {
+      toast.error('Unable to open subscription management');
+    }
+  };
+
   return (
-    <div className="min-h-screen gradient-soft pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="px-6 pt-8 pb-4">
-        <button 
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-muted-foreground mb-4"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
+      <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
         <h1 className="text-3xl font-heading font-bold">Settings</h1>
       </header>
 

@@ -3,14 +3,15 @@ import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
-import { UserProfile, getNutritionQuestion, SECONDARY_NUTRITION_QUESTIONS, LEVELS, getStageDescription } from '@/lib/types';
-import { getUserProfile, saveDailyCheckin, getTodayCheckin, saveUserProfile, calculatePoints, earnBadge, getWeeklyStats } from '@/lib/storage';
-import { Flame, Trophy, Target, Check, X, Settings, Award, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
+import { getUserProfile, getTodayCheckin, getWeeklyStats } from '@/lib/storage';
+import { Flame, Trophy, Check } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
+import { DailyTipCard } from './DailyTipCard';
+import { CoachTipCard } from './CoachTipCard';
+import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 
 export const Dashboard = () => {
-  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showCheckin, setShowCheckin] = useState(false);
   const [todayCompleted, setTodayCompleted] = useState(false);
@@ -39,22 +40,19 @@ export const Dashboard = () => {
     return <DailyCheckinFlow profile={profile} onComplete={() => setShowCheckin(false)} />;
   }
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
-    <div className="min-h-screen gradient-soft pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="px-6 pt-8 pb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
-            <h1 className="text-2xl font-heading font-bold">Hello, {profile.firstName}</h1>
-          </div>
-          <button 
-            onClick={() => navigate('/settings')}
-            className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
-          >
-            <Settings className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </div>
+      <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
+        <p className="text-muted-foreground text-sm">{format(new Date(), 'EEEE, MMMM d')}</p>
+        <h1 className="text-2xl font-heading font-bold">{getGreeting()}, {profile.firstName}</h1>
       </header>
 
       {/* Main Content */}
@@ -171,31 +169,14 @@ export const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-2 gap-4"
-        >
-          <button 
-            onClick={() => navigate('/badges')}
-            className="p-4 rounded-xl border-2 border-border bg-card flex items-center gap-3 hover:border-primary/50 transition-colors"
-          >
-            <Award className="w-6 h-6 text-primary" />
-            <span className="font-medium">Badges</span>
-            <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
-          </button>
-          <button 
-            onClick={() => navigate('/progress')}
-            className="p-4 rounded-xl border-2 border-border bg-card flex items-center gap-3 hover:border-primary/50 transition-colors"
-          >
-            <Target className="w-6 h-6 text-accent" />
-            <span className="font-medium">Progress</span>
-            <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
-          </button>
-        </motion.div>
+        {/* Coach Tip Card */}
+        <CoachTipCard />
+
+        {/* Daily Tip Card */}
+        <DailyTipCard />
       </main>
+
+      <BottomNavigation />
     </div>
   );
 };
