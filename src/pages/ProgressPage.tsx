@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay, subMonths, addMonths } from 'date-fns';
 import { getDailyCheckins, getUserProfile } from '@/lib/storage';
 import { DailyCheckin, UserProfile, LEVELS, getStageDescription } from '@/lib/types';
-import { ArrowLeft, ChevronLeft, ChevronRight, Check, X, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, X, Minus } from 'lucide-react';
 import { ProgressRing } from '@/components/ui/progress-ring';
+import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 
 export const ProgressPage = () => {
-  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [checkins, setCheckins] = useState<DailyCheckin[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -35,20 +34,13 @@ export const ProgressPage = () => {
     ? ((profile.totalPoints - currentLevel.minPoints) / (nextLevel.minPoints - currentLevel.minPoints)) * 100
     : 100;
 
-  const prevMonth = () => setCurrentMonth(subDays(monthStart, 1));
-  const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
   return (
-    <div className="min-h-screen gradient-soft pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="px-6 pt-8 pb-4">
-        <button 
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-muted-foreground mb-4"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
+      <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
         <h1 className="text-3xl font-heading font-bold">Your Progress</h1>
       </header>
 

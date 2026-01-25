@@ -1,34 +1,29 @@
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { getBadges } from '@/lib/storage';
 import { Badge } from '@/lib/types';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
+import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 
 export const BadgesPage = () => {
-  const navigate = useNavigate();
   const badges = getBadges();
 
   const categories = [
-    { id: 'consistency', name: 'Consistency', description: 'Show up every day' },
+    { id: 'streak', name: 'Streaks', description: 'Show up every day' },
     { id: 'activity', name: 'Activity', description: 'Keep moving forward' },
     { id: 'nutrition', name: 'Nutrition', description: 'Build healthy habits' },
-    { id: 'milestone', name: 'Milestones', description: 'Celebrate your journey' },
+    { id: 'perfect_day', name: 'Perfect Days', description: 'Achieve perfection' },
+    { id: 'stage_level', name: 'Stages & Levels', description: 'Climb higher' },
     { id: 'comeback', name: 'Comebacks', description: 'Never give up' },
+    { id: 'special', name: 'Special', description: 'Unique achievements' },
+    { id: 'mood', name: 'Mood', description: 'Emotional awareness' },
   ];
 
   const earnedCount = badges.filter(b => b.earned).length;
 
   return (
-    <div className="min-h-screen gradient-soft pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="px-6 pt-8 pb-4">
-        <button 
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-muted-foreground mb-4"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
+      <header className="px-6 pt-8 pb-4 bg-dusty-rose border-b border-border">
         <h1 className="text-3xl font-heading font-bold">Badges</h1>
         <p className="text-muted-foreground mt-1">
           {earnedCount} of {badges.length} earned
@@ -72,6 +67,8 @@ export const BadgesPage = () => {
           );
         })}
       </main>
+
+      <BottomNavigation />
     </div>
   );
 };
