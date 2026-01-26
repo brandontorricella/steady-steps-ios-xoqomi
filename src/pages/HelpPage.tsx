@@ -26,7 +26,7 @@ export const HelpPage = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = language === 'es' ? faqsEs : faqsEn;
-  const supportEmail = 'btorricella816@gmail.com';
+  const supportEmail = 'support@steadystepsapp.com';
 
   return (
     <div className="min-h-screen bg-background pb-24">

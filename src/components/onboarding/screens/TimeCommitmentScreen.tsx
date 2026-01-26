@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { TimeCommitment } from '@/lib/types';
 import { Check, Clock } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface TimeCommitmentScreenProps {
   value: TimeCommitment;
@@ -9,13 +10,15 @@ interface TimeCommitmentScreenProps {
   onNext: () => void;
 }
 
-const times: { value: TimeCommitment; label: string }[] = [
-  { value: '5_to_10', label: '5 to 10 minutes' },
-  { value: '10_to_15', label: '10 to 15 minutes' },
-  { value: '15_to_20', label: '15 to 20 minutes' },
-];
-
 export const TimeCommitmentScreen = ({ value, onChange, onNext }: TimeCommitmentScreenProps) => {
+  const { t } = useLanguage();
+
+  const times: { value: TimeCommitment; labelKey: string }[] = [
+    { value: '5_to_10', labelKey: 'time.fiveToTen' },
+    { value: '10_to_15', labelKey: 'time.tenToFifteen' },
+    { value: '15_to_20', labelKey: 'time.fifteenToTwenty' },
+  ];
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
       <motion.h1
@@ -23,7 +26,7 @@ export const TimeCommitmentScreen = ({ value, onChange, onNext }: TimeCommitment
         animate={{ opacity: 1, y: 0 }}
         className="text-3xl font-heading font-bold mb-2 text-center"
       >
-        How much time can you realistically commit each day?
+        {t('time.title')}
       </motion.h1>
 
       <motion.p
@@ -32,7 +35,7 @@ export const TimeCommitmentScreen = ({ value, onChange, onNext }: TimeCommitment
         transition={{ delay: 0.1 }}
         className="text-muted-foreground text-center max-w-sm mt-2"
       >
-        Be honest. We will start small and build from there.
+        {t('time.subtitle')}
       </motion.p>
 
       <motion.div
@@ -59,7 +62,7 @@ export const TimeCommitmentScreen = ({ value, onChange, onNext }: TimeCommitment
             }`}>
               <Clock className="w-5 h-5" />
             </div>
-            <span className="flex-1 text-left font-medium">{time.label}</span>
+            <span className="flex-1 text-left font-medium">{t(time.labelKey)}</span>
             {value === time.value && (
               <motion.div
                 initial={{ scale: 0 }}
@@ -80,7 +83,7 @@ export const TimeCommitmentScreen = ({ value, onChange, onNext }: TimeCommitment
         className="mt-12"
       >
         <Button size="lg" onClick={onNext} className="px-12 py-6 text-lg font-semibold">
-          Continue
+          {t('common.continue')}
         </Button>
       </motion.div>
     </div>

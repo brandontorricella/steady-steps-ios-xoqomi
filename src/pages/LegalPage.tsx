@@ -178,7 +178,7 @@ These Terms and Conditions, together with our Privacy Policy, constitute the ent
 
 If you have questions about these Terms and Conditions, please contact us at:
 
-Email: btorricella816@gmail.com`;
+Email: support@steadystepsapp.com`;
 
 const PRIVACY_CONTENT = `STEADYSTEPS PRIVACY POLICY
 
@@ -374,7 +374,7 @@ SteadySteps is not intended for children under 13 years of age (or under 16 in c
 
 We do not knowingly collect personal information from children under 13. If we learn that we have collected personal information from a child under 13, we will delete that information promptly.
 
-If you believe we have collected information from a child under 13, please contact us immediately at btorricella816@gmail.com.
+If you believe we have collected information from a child under 13, please contact us immediately at support@steadystepsapp.com.
 
 9. INTERNATIONAL USERS
 
@@ -396,7 +396,7 @@ If you are a California resident, you have additional rights under the Californi
 - Right to opt out of the sale of personal information (we do not sell your data)
 - Right to non-discrimination for exercising your rights
 
-To exercise these rights, contact us at btorricella816@gmail.com.
+To exercise these rights, contact us at support@steadystepsapp.com.
 
 11. CHANGES TO THIS POLICY
 
@@ -413,7 +413,7 @@ Your continued use of the app after changes are posted constitutes acceptance of
 
 If you have questions about this Privacy Policy, want to exercise your data rights, or have concerns about how we handle your information, please contact us:
 
-Email: btorricella816@gmail.com
+Email: support@steadystepsapp.com
 
 We will respond to your inquiry within 30 days.`;
 

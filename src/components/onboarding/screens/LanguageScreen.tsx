@@ -7,7 +7,7 @@ interface LanguageScreenProps {
 }
 
 export const LanguageScreen = ({ onNext }: LanguageScreenProps) => {
-  const { setLanguage } = useLanguage();
+  const { t, setLanguage } = useLanguage();
 
   const handleSelect = (lang: Language) => {
     setLanguage(lang);

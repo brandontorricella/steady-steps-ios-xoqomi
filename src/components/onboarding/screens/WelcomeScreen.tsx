@@ -1,12 +1,15 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Footprints } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface WelcomeScreenProps {
   onNext: () => void;
 }
 
 export const WelcomeScreen = ({ onNext }: WelcomeScreenProps) => {
+  const { t } = useLanguage();
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
       <motion.div
@@ -24,7 +27,7 @@ export const WelcomeScreen = ({ onNext }: WelcomeScreenProps) => {
         transition={{ delay: 0.2 }}
         className="text-4xl font-heading font-bold mb-4 text-foreground"
       >
-        Welcome to SteadySteps
+        {t('welcome.title')}
       </motion.h1>
 
       <motion.p
@@ -33,16 +36,7 @@ export const WelcomeScreen = ({ onNext }: WelcomeScreenProps) => {
         transition={{ delay: 0.3 }}
         className="text-lg text-muted-foreground max-w-sm mb-12 leading-relaxed"
       >
-        Small steps lead to lasting change. This app is designed for real life, not perfection.
-      </motion.p>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="text-muted-foreground mb-8"
-      >
-        Ready to begin?
+        {t('welcome.subtitle')}. {t('welcome.description')}
       </motion.p>
 
       <motion.div
@@ -51,7 +45,7 @@ export const WelcomeScreen = ({ onNext }: WelcomeScreenProps) => {
         transition={{ delay: 0.6 }}
       >
         <Button size="lg" onClick={onNext} className="px-12 py-6 text-lg font-semibold">
-          Get Started
+          {t('welcome.getStarted')}
         </Button>
       </motion.div>
     </div>

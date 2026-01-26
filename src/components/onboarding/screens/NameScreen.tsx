@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface NameScreenProps {
   value: string;
@@ -9,6 +10,7 @@ interface NameScreenProps {
 }
 
 export const NameScreen = ({ value, onChange, onNext }: NameScreenProps) => {
+  const { t } = useLanguage();
   const canContinue = value.trim().length >= 2;
 
   return (
@@ -18,7 +20,7 @@ export const NameScreen = ({ value, onChange, onNext }: NameScreenProps) => {
         animate={{ opacity: 1, y: 0 }}
         className="text-3xl font-heading font-bold mb-4 text-center"
       >
-        What should we call you?
+        {t('name.title')}
       </motion.h1>
 
       <motion.div
@@ -29,7 +31,7 @@ export const NameScreen = ({ value, onChange, onNext }: NameScreenProps) => {
       >
         <Input
           type="text"
-          placeholder="Your first name"
+          placeholder={t('name.placeholder')}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="text-center text-xl h-14 border-2 focus:border-primary"
@@ -49,7 +51,7 @@ export const NameScreen = ({ value, onChange, onNext }: NameScreenProps) => {
           disabled={!canContinue}
           className="px-12 py-6 text-lg font-semibold"
         >
-          Continue
+          {t('common.continue')}
         </Button>
       </motion.div>
     </div>

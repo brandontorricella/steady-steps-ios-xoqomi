@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
 import { getUserProfile, getWeeklyStats, getDailyCheckins } from '@/lib/storage';
 import { getMoodEmoji } from '@/lib/types';
+import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 
 export const WeeklySummaryPage = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export const WeeklySummaryPage = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-muted-foreground mb-4">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-muted-foreground mb-4 min-h-[44px] min-w-[44px]">
           <ArrowLeft className="w-5 h-5" />
           <span>{t('common.back')}</span>
         </button>
@@ -158,6 +159,7 @@ export const WeeklySummaryPage = () => {
           </Button>
         </motion.div>
       </main>
+      <BottomNavigation />
     </div>
   );
 };

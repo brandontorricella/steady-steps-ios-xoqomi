@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ActivityLevel } from '@/lib/types';
 import { Check, Armchair, PersonStanding, Activity } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface ActivityLevelScreenProps {
   value: ActivityLevel;
@@ -9,13 +10,15 @@ interface ActivityLevelScreenProps {
   onNext: () => void;
 }
 
-const levels: { value: ActivityLevel; label: string; icon: React.ReactNode }[] = [
-  { value: 'sedentary', label: 'Mostly sitting throughout the day', icon: <Armchair className="w-5 h-5" /> },
-  { value: 'light', label: 'Some walking but not much else', icon: <PersonStanding className="w-5 h-5" /> },
-  { value: 'moderate', label: 'Moderately active with occasional exercise', icon: <Activity className="w-5 h-5" /> },
-];
-
 export const ActivityLevelScreen = ({ value, onChange, onNext }: ActivityLevelScreenProps) => {
+  const { t } = useLanguage();
+
+  const levels: { value: ActivityLevel; labelKey: string; icon: React.ReactNode }[] = [
+    { value: 'sedentary', labelKey: 'activity.sedentary', icon: <Armchair className="w-5 h-5" /> },
+    { value: 'light', labelKey: 'activity.light', icon: <PersonStanding className="w-5 h-5" /> },
+    { value: 'moderate', labelKey: 'activity.moderate', icon: <Activity className="w-5 h-5" /> },
+  ];
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
       <motion.h1
@@ -23,8 +26,17 @@ export const ActivityLevelScreen = ({ value, onChange, onNext }: ActivityLevelSc
         animate={{ opacity: 1, y: 0 }}
         className="text-3xl font-heading font-bold mb-2 text-center"
       >
-        How active are you on a typical day?
+        {t('activity.title')}
       </motion.h1>
+
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="text-muted-foreground text-center max-w-sm mt-2"
+      >
+        {t('activity.subtitle')}
+      </motion.p>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -50,7 +62,7 @@ export const ActivityLevelScreen = ({ value, onChange, onNext }: ActivityLevelSc
             }`}>
               {level.icon}
             </div>
-            <span className="flex-1 text-left font-medium">{level.label}</span>
+            <span className="flex-1 text-left font-medium">{t(level.labelKey)}</span>
             {value === level.value && (
               <motion.div
                 initial={{ scale: 0 }}
@@ -71,7 +83,7 @@ export const ActivityLevelScreen = ({ value, onChange, onNext }: ActivityLevelSc
         className="mt-12"
       >
         <Button size="lg" onClick={onNext} className="px-12 py-6 text-lg font-semibold">
-          Continue
+          {t('common.continue')}
         </Button>
       </motion.div>
     </div>

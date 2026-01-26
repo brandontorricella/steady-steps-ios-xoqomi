@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Bell, Sun, Moon } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface NotificationScreenProps {
   morningTime: string;
@@ -23,6 +24,8 @@ export const NotificationScreen = ({
   onMiddayToggle,
   onNext,
 }: NotificationScreenProps) => {
+  const { t } = useLanguage();
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
       <motion.h1
@@ -30,7 +33,7 @@ export const NotificationScreen = ({
         animate={{ opacity: 1, y: 0 }}
         className="text-3xl font-heading font-bold mb-2 text-center"
       >
-        When should we check in with you?
+        {t('notifications.title')}
       </motion.h1>
 
       <motion.p
@@ -39,7 +42,7 @@ export const NotificationScreen = ({
         transition={{ delay: 0.1 }}
         className="text-muted-foreground text-center max-w-sm mt-2"
       >
-        A quick reminder helps build the habit. You can change this anytime.
+        {t('notifications.subtitle')}
       </motion.p>
 
       <motion.div
@@ -55,8 +58,8 @@ export const NotificationScreen = ({
               <Sun className="w-5 h-5 text-accent-foreground" />
             </div>
             <div className="flex-1">
-              <Label className="font-medium">Morning reminder</Label>
-              <p className="text-sm text-muted-foreground">Start your day with motivation</p>
+              <Label className="font-medium">{t('notifications.morning')}</Label>
+              <p className="text-sm text-muted-foreground">{t('notifications.morningDesc')}</p>
             </div>
             <input
               type="time"
@@ -74,8 +77,8 @@ export const NotificationScreen = ({
               <Moon className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="flex-1">
-              <Label className="font-medium">Evening check-in</Label>
-              <p className="text-sm text-muted-foreground">Log your daily progress</p>
+              <Label className="font-medium">{t('notifications.evening')}</Label>
+              <p className="text-sm text-muted-foreground">{t('notifications.eveningDesc')}</p>
             </div>
             <input
               type="time"
@@ -93,8 +96,8 @@ export const NotificationScreen = ({
               <Bell className="w-5 h-5 text-muted-foreground" />
             </div>
             <div className="flex-1">
-              <Label className="font-medium">Midday nutrition nudge</Label>
-              <p className="text-sm text-muted-foreground">Quick lunchtime reminder</p>
+              <Label className="font-medium">{t('notifications.midday')}</Label>
+              <p className="text-sm text-muted-foreground">{t('notifications.middayDesc')}</p>
             </div>
             <Switch
               checked={middayEnabled}
@@ -111,7 +114,7 @@ export const NotificationScreen = ({
         className="mt-12"
       >
         <Button size="lg" onClick={onNext} className="px-12 py-6 text-lg font-semibold">
-          Continue
+          {t('common.continue')}
         </Button>
       </motion.div>
     </div>

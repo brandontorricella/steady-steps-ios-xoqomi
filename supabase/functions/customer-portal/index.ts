@@ -52,13 +52,12 @@ serve(async (req) => {
       }
     } catch (listError: any) {
       // If we can't list customers due to restricted key permissions,
-      // try to create a new customer or return a helpful message
+      // return a helpful message with support email
       logStep("Customer lookup failed, restricted key may not have permission", { error: listError.message });
       
-      // Return a message asking user to manage via Stripe directly
       return new Response(JSON.stringify({ 
-        error: "Please contact support to manage your subscription: btorricella816@gmail.com",
-        supportEmail: "btorricella816@gmail.com"
+        error: "Please contact support to manage your subscription: support@steadystepsapp.com",
+        supportEmail: "support@steadystepsapp.com"
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200, // Return 200 so frontend can handle gracefully
@@ -75,16 +74,28 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "https://steadysteps.app";
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${origin}/settings`,
-    });
-    logStep("Customer portal session created", { url: portalSession.url });
+    
+    try {
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${origin}/settings`,
+      });
+      logStep("Customer portal session created", { url: portalSession.url });
 
-    return new Response(JSON.stringify({ url: portalSession.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+      return new Response(JSON.stringify({ url: portalSession.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } catch (portalError: any) {
+      logStep("Portal creation failed", { error: portalError.message });
+      return new Response(JSON.stringify({ 
+        error: "Please contact support to manage your subscription: support@steadystepsapp.com",
+        supportEmail: "support@steadystepsapp.com"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
