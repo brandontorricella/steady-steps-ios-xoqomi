@@ -46,22 +46,16 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Check if customer exists
-    if (userEmail) {
-      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-      if (customers.data.length > 0) {
-        customerId = customers.data[0].id;
-        logStep("Found existing customer", { customerId });
-      }
-    }
+    // Skip customer lookup - let Stripe handle it via customer_email
+    // This avoids needing customer:read permission on restricted keys
+    logStep("Proceeding without customer lookup");
 
     // For now, create a checkout session with trial
     // Users can create products in their Stripe dashboard
     const origin = req.headers.get("origin") || "https://steadysteps.app";
     
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
-      customer: customerId,
-      customer_email: customerId ? undefined : userEmail || undefined,
+      customer_email: userEmail || undefined,
       payment_method_types: ['card'],
       mode: "subscription",
       success_url: `${origin}/?payment=success`,
