@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { CreditCard, Check, Shield, Sparkles } from 'lucide-react';
+import { Check, Shield, Sparkles } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface PaymentScreenProps {
   onNext: () => void;
-  onSkip?: () => void;
 }
 
-export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
+export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
+  const { t } = useLanguage();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
   const [isLoading, setIsLoading] = useState(false);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
@@ -28,9 +27,9 @@ export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
       if (error) throw error;
       if (data?.url) {
         window.open(data.url, '_blank');
-        // User will return after payment, proceed to next screen
+        // Wait for user to complete payment
         setTimeout(() => {
-          toast.success('You are all set! Let\'s begin.');
+          toast.success(t('common.done'));
           onNext();
         }, 1000);
       }
@@ -43,10 +42,10 @@ export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
   };
 
   const features = [
-    'Your personal AI fitness and nutrition coach',
-    'Daily guidance that takes less than 60 seconds',
-    'Progress tracking and achievement system',
-    'Gentle reminders to keep you on track',
+    t('payment.features.coach'),
+    t('payment.features.daily'),
+    t('payment.features.progress'),
+    t('payment.features.reminders'),
   ];
 
   return (
@@ -56,7 +55,7 @@ export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
         animate={{ opacity: 1, y: 0 }}
         className="text-3xl font-heading font-bold mb-2 text-center"
       >
-        Start Your Journey
+        {t('payment.title')}
       </motion.h1>
 
       <motion.p
@@ -65,7 +64,7 @@ export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
         transition={{ delay: 0.1 }}
         className="text-muted-foreground text-center mb-6"
       >
-        Join thousands of women building healthier habits
+        {t('payment.subtitle')}
       </motion.p>
 
       {/* Pricing Options */}
@@ -84,12 +83,12 @@ export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
           }`}
         >
           <div className="text-left">
-            <p className="font-semibold text-lg">Monthly</p>
-            <p className="text-muted-foreground text-sm">Flexible, cancel anytime</p>
+            <p className="font-semibold text-lg">{t('payment.monthly')}</p>
+            <p className="text-muted-foreground text-sm">{t('payment.monthlyDesc')}</p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-primary">$4.99</p>
-            <p className="text-sm text-muted-foreground">/month</p>
+            <p className="text-sm text-muted-foreground">{t('payment.perMonth')}</p>
           </div>
           {selectedPlan === 'monthly' && (
             <div className="ml-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
@@ -107,15 +106,15 @@ export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
           }`}
         >
           <div className="absolute -top-2 left-4 px-2 py-0.5 bg-gold text-gold-foreground text-xs font-semibold rounded-full">
-            Save 50%
+            {t('payment.save')}
           </div>
           <div className="text-left">
-            <p className="font-semibold text-lg">Annual</p>
-            <p className="text-muted-foreground text-sm">Best value</p>
+            <p className="font-semibold text-lg">{t('payment.annual')}</p>
+            <p className="text-muted-foreground text-sm">{t('payment.annualDesc')}</p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-primary">$29.99</p>
-            <p className="text-sm text-muted-foreground">/year</p>
+            <p className="text-sm text-muted-foreground">{t('payment.perYear')}</p>
           </div>
           {selectedPlan === 'annual' && (
             <div className="ml-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
@@ -147,7 +146,7 @@ export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="space-y-4"
+        className="space-y-4 mt-auto"
       >
         <Button
           size="lg"
@@ -156,20 +155,13 @@ export const PaymentScreen = ({ onNext, onSkip }: PaymentScreenProps) => {
           className="w-full py-6 text-lg font-semibold"
         >
           <Sparkles className="w-5 h-5 mr-2" />
-          {isLoading ? 'Opening checkout...' : 'Start My Free 7-Day Trial'}
+          {isLoading ? t('common.loading') : t('payment.startTrial')}
         </Button>
 
         <p className="text-center text-xs text-muted-foreground">
           <Shield className="w-3 h-3 inline mr-1" />
-          Your free trial starts today. You will not be charged until {trialEndDate}. Cancel anytime in settings.
+          {t('payment.trialNote')} {trialEndDate}. {t('payment.cancelAnytime')}
         </p>
-
-        <button
-          onClick={onNext}
-          className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-        >
-          Continue with free trial later
-        </button>
       </motion.div>
     </div>
   );
