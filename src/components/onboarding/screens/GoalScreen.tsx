@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { PrimaryGoal } from '@/lib/types';
 import { Check, Scale, Zap, Heart, Sparkles } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface GoalScreenProps {
   value: PrimaryGoal;
@@ -9,14 +10,16 @@ interface GoalScreenProps {
   onNext: () => void;
 }
 
-const goals: { value: PrimaryGoal; label: string; icon: React.ReactNode }[] = [
-  { value: 'weight_loss', label: 'I want to lose weight gradually', icon: <Scale className="w-5 h-5" /> },
-  { value: 'energy', label: 'I want to have more energy', icon: <Zap className="w-5 h-5" /> },
-  { value: 'habits', label: 'I want to build healthier habits', icon: <Heart className="w-5 h-5" /> },
-  { value: 'confidence', label: 'I want to feel better about myself', icon: <Sparkles className="w-5 h-5" /> },
-];
-
 export const GoalScreen = ({ value, onChange, onNext }: GoalScreenProps) => {
+  const { t } = useLanguage();
+
+  const goals: { value: PrimaryGoal; labelKey: string; icon: React.ReactNode }[] = [
+    { value: 'weight_loss', labelKey: 'goal.weightLoss', icon: <Scale className="w-5 h-5" /> },
+    { value: 'energy', labelKey: 'goal.energy', icon: <Zap className="w-5 h-5" /> },
+    { value: 'habits', labelKey: 'goal.habits', icon: <Heart className="w-5 h-5" /> },
+    { value: 'confidence', labelKey: 'goal.confidence', icon: <Sparkles className="w-5 h-5" /> },
+  ];
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
       <motion.h1
@@ -24,7 +27,7 @@ export const GoalScreen = ({ value, onChange, onNext }: GoalScreenProps) => {
         animate={{ opacity: 1, y: 0 }}
         className="text-3xl font-heading font-bold mb-2 text-center"
       >
-        What matters most to you right now?
+        {t('goal.title')}
       </motion.h1>
 
       <motion.div
@@ -51,7 +54,7 @@ export const GoalScreen = ({ value, onChange, onNext }: GoalScreenProps) => {
             }`}>
               {goal.icon}
             </div>
-            <span className="flex-1 text-left font-medium">{goal.label}</span>
+            <span className="flex-1 text-left font-medium">{t(goal.labelKey)}</span>
             {value === goal.value && (
               <motion.div
                 initial={{ scale: 0 }}
@@ -72,7 +75,7 @@ export const GoalScreen = ({ value, onChange, onNext }: GoalScreenProps) => {
         className="mt-12"
       >
         <Button size="lg" onClick={onNext} className="px-12 py-6 text-lg font-semibold">
-          Continue
+          {t('common.continue')}
         </Button>
       </motion.div>
     </div>

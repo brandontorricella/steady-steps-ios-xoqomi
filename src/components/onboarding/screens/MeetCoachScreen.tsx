@@ -1,12 +1,15 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Heart, Sparkles } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface MeetCoachScreenProps {
   onNext: () => void;
 }
 
 export const MeetCoachScreen = ({ onNext }: MeetCoachScreenProps) => {
+  const { t } = useLanguage();
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
       <motion.div
@@ -33,7 +36,7 @@ export const MeetCoachScreen = ({ onNext }: MeetCoachScreenProps) => {
         transition={{ delay: 0.2 }}
         className="text-3xl font-heading font-bold mb-2 text-center"
       >
-        Meet Coach Lily
+        {t('coach.meetTitle')}
       </motion.h1>
 
       <motion.p
@@ -42,7 +45,7 @@ export const MeetCoachScreen = ({ onNext }: MeetCoachScreenProps) => {
         transition={{ delay: 0.3 }}
         className="text-lg text-muted-foreground text-center mb-8"
       >
-        Your personal guide to healthier habits
+        {t('coach.meetSubtitle')}
       </motion.p>
 
       <motion.div
@@ -52,9 +55,7 @@ export const MeetCoachScreen = ({ onNext }: MeetCoachScreenProps) => {
         className="max-w-sm text-center mb-8"
       >
         <p className="text-foreground mb-6">
-          Coach Lily is here to answer your questions about fitness and nutrition anytime. 
-          No question is too simple. Think of her as your supportive friend who happens to 
-          know a lot about healthy living.
+          {t('coach.meetDescription')}
         </p>
       </motion.div>
 
@@ -66,19 +67,19 @@ export const MeetCoachScreen = ({ onNext }: MeetCoachScreenProps) => {
       >
         <div className="p-3 rounded-xl bg-card border border-border flex items-center gap-3">
           <span className="text-xl">🏃‍♀️</span>
-          <span className="text-sm">Simple movement ideas</span>
+          <span className="text-sm">{t('coach.features.movement')}</span>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border flex items-center gap-3">
           <span className="text-xl">🥗</span>
-          <span className="text-sm">Nutrition tips and healthy swaps</span>
+          <span className="text-sm">{t('coach.features.nutrition')}</span>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border flex items-center gap-3">
           <span className="text-xl">💪</span>
-          <span className="text-sm">Motivation when you need it</span>
+          <span className="text-sm">{t('coach.features.motivation')}</span>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border flex items-center gap-3">
           <span className="text-xl">❓</span>
-          <span className="text-sm">Answers to your health questions</span>
+          <span className="text-sm">{t('coach.features.questions')}</span>
         </div>
       </motion.div>
 
@@ -89,7 +90,7 @@ export const MeetCoachScreen = ({ onNext }: MeetCoachScreenProps) => {
         className="mt-10"
       >
         <Button size="lg" onClick={onNext} className="px-12 py-6 text-lg font-semibold">
-          Nice to Meet You, Coach!
+          {t('coach.meetButton')}
         </Button>
       </motion.div>
     </div>

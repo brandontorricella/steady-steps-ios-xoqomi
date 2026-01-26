@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { UserProfile, getActivityGoalFromCommitment, getNutritionQuestion } from '@/lib/types';
 import { Timer, Utensils, Star } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface StartingPointScreenProps {
   profile: UserProfile;
@@ -9,8 +10,23 @@ interface StartingPointScreenProps {
 }
 
 export const StartingPointScreen = ({ profile, onNext }: StartingPointScreenProps) => {
+  const { t, language } = useLanguage();
   const activityMinutes = getActivityGoalFromCommitment(profile.dailyTimeCommitment);
   const focusHabit = getNutritionQuestion(profile.primaryNutritionChallenge).replace('Did you ', '').replace('?', '');
+
+  const titleText = language === 'es' 
+    ? `Este es tu plan inicial, ${profile.firstName}` 
+    : `Here is your starting plan, ${profile.firstName}`;
+
+  const activityLabel = language === 'es' ? 'Tu meta de actividad diaria' : 'Your daily activity goal';
+  const minutesLabel = language === 'es' ? 'minutos' : 'minutes';
+  const focusLabel = language === 'es' ? 'Tu hábito de enfoque' : 'Your focus habit';
+  const stageLabel = language === 'es' ? 'Tu etapa' : 'Your stage';
+  const beginnerLabel = language === 'es' ? 'Principiante' : 'Beginner';
+  const noteText = language === 'es' 
+    ? 'Recuerda, esto está diseñado para ser fácil al principio. La constancia importa más que la intensidad.'
+    : 'Remember, this is designed to be easy at first. Consistency matters more than intensity.';
+  const buttonText = language === 'es' ? 'Estoy Lista Para Comenzar' : 'I Am Ready to Begin';
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
@@ -19,7 +35,7 @@ export const StartingPointScreen = ({ profile, onNext }: StartingPointScreenProp
         animate={{ opacity: 1, y: 0 }}
         className="text-3xl font-heading font-bold mb-2 text-center"
       >
-        Here is your starting plan, {profile.firstName}
+        {titleText}
       </motion.h1>
 
       <motion.div
@@ -35,8 +51,8 @@ export const StartingPointScreen = ({ profile, onNext }: StartingPointScreenProp
               <Timer className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm opacity-80">Your daily activity goal</p>
-              <p className="text-2xl font-bold">{activityMinutes} minutes</p>
+              <p className="text-sm opacity-80">{activityLabel}</p>
+              <p className="text-2xl font-bold">{activityMinutes} {minutesLabel}</p>
             </div>
           </div>
         </div>
@@ -48,7 +64,7 @@ export const StartingPointScreen = ({ profile, onNext }: StartingPointScreenProp
               <Utensils className="w-6 h-6 text-accent-foreground" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Your focus habit</p>
+              <p className="text-sm text-muted-foreground">{focusLabel}</p>
               <p className="font-semibold capitalize">{focusHabit}</p>
             </div>
           </div>
@@ -61,8 +77,8 @@ export const StartingPointScreen = ({ profile, onNext }: StartingPointScreenProp
               <Star className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Your stage</p>
-              <p className="font-semibold">Beginner</p>
+              <p className="text-sm text-muted-foreground">{stageLabel}</p>
+              <p className="font-semibold">{beginnerLabel}</p>
             </div>
           </div>
         </div>
@@ -74,7 +90,7 @@ export const StartingPointScreen = ({ profile, onNext }: StartingPointScreenProp
         transition={{ delay: 0.3 }}
         className="text-muted-foreground text-center max-w-sm mt-8"
       >
-        Remember, this is designed to be easy at first. Consistency matters more than intensity.
+        {noteText}
       </motion.p>
 
       <motion.div
@@ -84,7 +100,7 @@ export const StartingPointScreen = ({ profile, onNext }: StartingPointScreenProp
         className="mt-8"
       >
         <Button size="lg" onClick={onNext} className="px-12 py-6 text-lg font-semibold">
-          I Am Ready to Begin
+          {buttonText}
         </Button>
       </motion.div>
     </div>
