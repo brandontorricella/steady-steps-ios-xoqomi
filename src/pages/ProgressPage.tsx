@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay, subMonths, addMonths } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, subMonths, addMonths } from 'date-fns';
 import { getDailyCheckins, getUserProfile } from '@/lib/storage';
 import { DailyCheckin, UserProfile, LEVELS, getStageDescription } from '@/lib/types';
-import { ChevronLeft, ChevronRight, Check, X, Minus } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Check, Minus } from 'lucide-react';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export const ProgressPage = () => {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [checkins, setCheckins] = useState<DailyCheckin[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -39,12 +43,19 @@ export const ProgressPage = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
+      {/* Header with Back Button */}
       <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
-        <h1 className="text-3xl font-heading font-bold">Your Progress</h1>
+        <button 
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-muted-foreground mb-4 min-h-[44px] min-w-[44px]"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>{t('common.back')}</span>
+        </button>
+        <h1 className="text-3xl font-heading font-bold">{t('progress.title')}</h1>
       </header>
 
-      <main className="px-6 space-y-6">
+      <main className="px-6 py-6 space-y-6">
         {/* Stats Overview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -56,7 +67,7 @@ export const ProgressPage = () => {
             <p className="text-sm text-muted-foreground">Check-ins</p>
           </div>
           <div className="p-4 rounded-xl bg-card border-2 border-border text-center">
-            <p className="text-3xl font-bold text-accent">{profile.totalActivityCompletions}</p>
+            <p className="text-3xl font-bold text-accent-foreground">{profile.totalActivityCompletions}</p>
             <p className="text-sm text-muted-foreground">Activities</p>
           </div>
           <div className="p-4 rounded-xl bg-card border-2 border-border text-center">
@@ -72,7 +83,7 @@ export const ProgressPage = () => {
           transition={{ delay: 0.1 }}
           className="p-6 rounded-2xl border-2 border-border bg-card"
         >
-          <h2 className="font-heading font-semibold mb-4">Level Progress</h2>
+          <h2 className="font-heading font-semibold mb-4">{t('dashboard.level')} Progress</h2>
           <div className="flex items-center gap-6">
             <ProgressRing progress={levelProgress} size={100} strokeWidth={8}>
               <div className="text-center">
@@ -81,7 +92,7 @@ export const ProgressPage = () => {
             </ProgressRing>
             <div className="flex-1">
               <p className="font-heading font-bold text-xl">{currentLevel.name}</p>
-              <p className="text-muted-foreground">{profile.totalPoints} points</p>
+              <p className="text-muted-foreground">{profile.totalPoints} {t('dashboard.points')}</p>
               {currentLevel.level < 10 && (
                 <p className="text-sm text-muted-foreground mt-2">
                   {nextLevel.minPoints - profile.totalPoints} points to {nextLevel.name}
@@ -98,7 +109,7 @@ export const ProgressPage = () => {
           transition={{ delay: 0.15 }}
           className="p-6 rounded-2xl gradient-primary text-primary-foreground"
         >
-          <p className="text-sm opacity-80">Current Stage</p>
+          <p className="text-sm opacity-80">{t('dashboard.stage')}</p>
           <p className="text-2xl font-heading font-bold capitalize">{profile.currentStage}</p>
           <p className="text-sm opacity-80 mt-1">{getStageDescription(profile.currentStage)}</p>
         </motion.div>
@@ -111,11 +122,11 @@ export const ProgressPage = () => {
           className="p-6 rounded-2xl border-2 border-border bg-card"
         >
           <div className="flex items-center justify-between mb-6">
-            <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-secondary">
+            <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-secondary min-h-[44px] min-w-[44px] flex items-center justify-center">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <h2 className="font-heading font-semibold">{format(currentMonth, 'MMMM yyyy')}</h2>
-            <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-secondary">
+            <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-secondary min-h-[44px] min-w-[44px] flex items-center justify-center">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
@@ -185,6 +196,8 @@ export const ProgressPage = () => {
           </div>
         </motion.div>
       </main>
+
+      <BottomNavigation />
     </div>
   );
 };
