@@ -40,12 +40,39 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (customers.data.length === 0) {
-      throw new Error("No Stripe customer found for this user");
+    
+    // Try to find customer, but handle restricted key gracefully
+    let customerId: string | undefined;
+    
+    try {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found Stripe customer", { customerId });
+      }
+    } catch (listError: any) {
+      // If we can't list customers due to restricted key permissions,
+      // try to create a new customer or return a helpful message
+      logStep("Customer lookup failed, restricted key may not have permission", { error: listError.message });
+      
+      // Return a message asking user to manage via Stripe directly
+      return new Response(JSON.stringify({ 
+        error: "Please contact support to manage your subscription: btorricella816@gmail.com",
+        supportEmail: "btorricella816@gmail.com"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, // Return 200 so frontend can handle gracefully
+      });
     }
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
+    
+    if (!customerId) {
+      return new Response(JSON.stringify({ 
+        error: "No subscription found for this account. Please subscribe first.",
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     const origin = req.headers.get("origin") || "https://steadysteps.app";
     const portalSession = await stripe.billingPortal.sessions.create({
