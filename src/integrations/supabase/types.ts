@@ -147,6 +147,7 @@ export type Database = {
           evening_reminder_time: string | null
           first_name: string | null
           id: string
+          language: string | null
           last_checkin_date: string | null
           longest_streak: number | null
           midday_nudge_enabled: boolean | null
@@ -183,6 +184,7 @@ export type Database = {
           evening_reminder_time?: string | null
           first_name?: string | null
           id: string
+          language?: string | null
           last_checkin_date?: string | null
           longest_streak?: number | null
           midday_nudge_enabled?: boolean | null
@@ -219,6 +221,7 @@ export type Database = {
           evening_reminder_time?: string | null
           first_name?: string | null
           id?: string
+          language?: string | null
           last_checkin_date?: string | null
           longest_streak?: number | null
           midday_nudge_enabled?: boolean | null

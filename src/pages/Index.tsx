@@ -5,12 +5,14 @@ import { Dashboard } from '@/components/dashboard/Dashboard';
 import { getUserProfile, saveUserProfile } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileSync } from '@/hooks/useProfileSync';
+import { useLanguage, setStoredLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { fetchAndSyncProfile } = useProfileSync();
+  const { setLanguage } = useLanguage();
   const [searchParams] = useSearchParams();
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,12 @@ const Index = () => {
       // If user is authenticated, try to fetch their profile from database
       if (user) {
         const profile = await fetchAndSyncProfile(user.id);
+        
+        // Sync language preference from profile
+        if (profile?.language) {
+          setLanguage(profile.language as 'en' | 'es');
+          setStoredLanguage(profile.language as 'en' | 'es');
+        }
         
         if (profile?.onboardingCompleted) {
           // Check subscription status to ensure payment was completed

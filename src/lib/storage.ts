@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
 
 export const getDefaultUserProfile = (): UserProfile => ({
   firstName: '',
+  language: 'en',
   primaryGoal: 'habits',
   activityLevel: 'sedentary',
   primaryNutritionChallenge: 'unsure',

@@ -18,6 +18,7 @@ import { UserProfile, getActivityGoalFromCommitment } from '@/lib/types';
 import { saveUserProfile, getDefaultUserProfile } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileSync } from '@/hooks/useProfileSync';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface OnboardingContainerProps {
   onComplete: () => void;
@@ -26,6 +27,7 @@ interface OnboardingContainerProps {
 export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) => {
   const { user } = useAuth();
   const { syncProfileToDatabase } = useProfileSync();
+  const { language } = useLanguage();
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<UserProfile>(getDefaultUserProfile());
   const [email, setEmail] = useState('');
@@ -42,6 +44,7 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
     const finalProfile = {
       ...profile,
       email,
+      language: language, // Save the user's language preference
       currentActivityGoalMinutes: getActivityGoalFromCommitment(profile.dailyTimeCommitment),
       onboardingCompleted: true,
       trialStartDate: new Date().toISOString(),
