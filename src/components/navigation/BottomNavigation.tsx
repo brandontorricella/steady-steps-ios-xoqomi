@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Home, TrendingUp, MessageCircleHeart, Award, User } from 'lucide-react';
+import { Home, TrendingUp, MessageCircleHeart, Users, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -7,7 +6,7 @@ const tabs = [
   { id: 'home', icon: Home, label: 'Home', path: '/' },
   { id: 'progress', icon: TrendingUp, label: 'Progress', path: '/progress' },
   { id: 'coach', icon: MessageCircleHeart, label: 'Coach', path: '/coach' },
-  { id: 'badges', icon: Award, label: 'Badges', path: '/badges' },
+  { id: 'community', icon: Users, label: 'Community', path: '/community' },
   { id: 'profile', icon: User, label: 'Profile', path: '/settings' },
 ];
 

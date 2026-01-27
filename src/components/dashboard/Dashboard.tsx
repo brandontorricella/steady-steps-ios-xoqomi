@@ -139,7 +139,7 @@ export const Dashboard = () => {
             <Button 
               size="lg" 
               onClick={() => setShowCheckin(true)}
-              className="w-full py-8 text-lg font-semibold rounded-2xl animate-pulse-soft"
+              className="w-full py-8 text-lg font-semibold rounded-2xl"
             >
               <Check className="w-6 h-6 mr-2" />
               {t.checkIn}
