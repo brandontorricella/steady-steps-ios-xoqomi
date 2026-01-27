@@ -25,6 +25,7 @@ export const useProfileSync = () => {
         // Map database fields to local profile structure
         const profile: UserProfile = {
           firstName: data.first_name || '',
+          language: (data.language as 'en' | 'es') || 'en',
           email: data.email,
           primaryGoal: (data.primary_goal as UserProfile['primaryGoal']) || 'habits',
           activityLevel: (data.activity_level as UserProfile['activityLevel']) || 'sedentary',
@@ -78,6 +79,7 @@ export const useProfileSync = () => {
           id: userId,
           email: profile.email || '',
           first_name: profile.firstName,
+          language: profile.language || 'en',
           primary_goal: profile.primaryGoal,
           activity_level: profile.activityLevel,
           primary_nutrition_challenge: profile.primaryNutritionChallenge,

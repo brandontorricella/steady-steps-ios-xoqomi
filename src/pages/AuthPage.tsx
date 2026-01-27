@@ -7,13 +7,13 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Mail, Lock, Heart, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useLanguage } from '@/hooks/useLanguage';
+import { useLanguage, setStoredLanguage } from '@/hooks/useLanguage';
 import { useProfileSync } from '@/hooks/useProfileSync';
 
 export const AuthPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { fetchAndSyncProfile } = useProfileSync();
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset-sent'>('login');
   const [email, setEmail] = useState('');
@@ -42,7 +42,12 @@ export const AuthPage = () => {
         
         // Fetch and sync profile from database
         if (data.user) {
-          await fetchAndSyncProfile(data.user.id);
+          const profile = await fetchAndSyncProfile(data.user.id);
+          // Sync language preference from profile
+          if (profile?.language) {
+            setLanguage(profile.language as 'en' | 'es');
+            setStoredLanguage(profile.language as 'en' | 'es');
+          }
         }
         
         toast.success(language === 'en' ? 'Welcome back!' : '¡Bienvenida de nuevo!');

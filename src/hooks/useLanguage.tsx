@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, translations, getTranslation } from '@/lib/i18n';
+import { Language, getTranslation } from '@/lib/i18n';
 
 interface LanguageContextType {
   language: Language;
@@ -25,6 +25,14 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
   };
 
+  // Function to sync language from profile (called after login)
+  const syncLanguageFromProfile = (profileLanguage: Language | undefined) => {
+    if (profileLanguage && (profileLanguage === 'en' || profileLanguage === 'es')) {
+      setLanguageState(profileLanguage);
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, profileLanguage);
+    }
+  };
+
   const t = (path: string): string => {
     return getTranslation(language, path);
   };
@@ -42,4 +50,17 @@ export const useLanguage = () => {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
+};
+
+// Export a function to sync language from profile (used by auth flow)
+export const getStoredLanguage = (): Language => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (stored === 'en' || stored === 'es') return stored;
+  }
+  return 'en';
+};
+
+export const setStoredLanguage = (lang: Language) => {
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
 };

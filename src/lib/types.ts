@@ -12,6 +12,7 @@ export interface UserProfile {
   id?: string;
   email?: string;
   firstName: string;
+  language?: 'en' | 'es';
   primaryGoal: PrimaryGoal;
   activityLevel: ActivityLevel;
   primaryNutritionChallenge: NutritionChallenge;
