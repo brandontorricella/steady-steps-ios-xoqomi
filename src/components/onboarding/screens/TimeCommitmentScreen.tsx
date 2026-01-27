@@ -17,6 +17,9 @@ export const TimeCommitmentScreen = ({ value, onChange, onNext }: TimeCommitment
     { value: '5_to_10', labelKey: 'time.fiveToTen' },
     { value: '10_to_15', labelKey: 'time.tenToFifteen' },
     { value: '15_to_20', labelKey: 'time.fifteenToTwenty' },
+    { value: '20_to_30', labelKey: 'time.twentyToThirty' },
+    { value: '30_to_45', labelKey: 'time.thirtyToFortyFive' },
+    { value: '45_to_60', labelKey: 'time.fortyFiveToSixty' },
   ];
 
   return (

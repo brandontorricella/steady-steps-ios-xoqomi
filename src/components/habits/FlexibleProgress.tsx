@@ -20,7 +20,7 @@ export const FlexibleProgress = ({ isOpen, onClose, profile, onProfileUpdate }: 
 
   const currentGoal = profile.currentActivityGoalMinutes;
   const minGoal = 5;
-  const maxGoal = 30;
+  const maxGoal = 90;
 
   const handleAdjustGoal = (direction: 'up' | 'down') => {
     let newGoal = currentGoal;

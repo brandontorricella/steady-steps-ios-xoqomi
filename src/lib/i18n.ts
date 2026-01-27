@@ -100,6 +100,9 @@ export const translations = {
       fiveToTen: '5-10 minutes',
       tenToFifteen: '10-15 minutes',
       fifteenToTwenty: '15-20 minutes',
+      twentyToThirty: '20-30 minutes',
+      thirtyToFortyFive: '30-45 minutes',
+      fortyFiveToSixty: '45-60 minutes',
     },
     // Coach
     coach: {
@@ -484,6 +487,9 @@ export const translations = {
       fiveToTen: '5-10 minutos',
       tenToFifteen: '10-15 minutos',
       fifteenToTwenty: '15-20 minutos',
+      twentyToThirty: '20-30 minutos',
+      thirtyToFortyFive: '30-45 minutos',
+      fortyFiveToSixty: '45-60 minutos',
     },
     // Coach
     coach: {

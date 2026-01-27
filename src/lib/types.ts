@@ -3,7 +3,7 @@
 export type PrimaryGoal = 'weight_loss' | 'energy' | 'habits' | 'confidence';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate';
 export type NutritionChallenge = 'sugary_drinks' | 'late_snacking' | 'portions' | 'processed_food' | 'unsure';
-export type TimeCommitment = '5_to_10' | '10_to_15' | '15_to_20';
+export type TimeCommitment = '5_to_10' | '10_to_15' | '15_to_20' | '20_to_30' | '30_to_45' | '45_to_60';
 export type Stage = 'beginner' | 'consistent' | 'confident';
 export type Mood = 'great' | 'good' | 'okay' | 'stressed' | 'tired';
 export type BadgeCategory = 'streak' | 'activity' | 'nutrition' | 'perfect_day' | 'stage_level' | 'comeback' | 'special' | 'mood';
@@ -191,6 +191,7 @@ export const BADGES: Badge[] = [
   { id: 'coach_regular', name: 'Coach Regular', description: 'Have 50 conversations with the AI Coach', category: 'special', earned: false, icon: '🗣️' },
   { id: 'buddy_builder', name: 'Buddy Builder', description: 'Add your first accountability buddy', category: 'special', earned: false, icon: '🤝' },
   { id: 'community_creator', name: 'Community Creator', description: 'Refer 3 friends who complete their first week', category: 'special', earned: false, icon: '🌍' },
+  { id: 'referral_champion', name: 'Referral Champion', description: 'Earn your first free month from referrals', category: 'special', earned: false, icon: '🏅' },
 
   // MOOD TRACKING BADGES (7)
   { id: 'mood_starter', name: 'Mood Starter', description: 'Complete your first mood check-in', category: 'mood', earned: false, icon: '😊' },
@@ -333,6 +334,9 @@ export const getActivityGoalFromCommitment = (commitment: TimeCommitment): numbe
     case '5_to_10': return 5;
     case '10_to_15': return 10;
     case '15_to_20': return 15;
+    case '20_to_30': return 20;
+    case '30_to_45': return 30;
+    case '45_to_60': return 45;
     default: return 5;
   }
 };

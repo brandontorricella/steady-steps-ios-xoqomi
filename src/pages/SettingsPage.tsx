@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle } from 'lucide-react';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -29,10 +29,14 @@ export const SettingsPage = () => {
   const { t, language } = useLanguage();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showDeleteFlow, setShowDeleteFlow] = useState(false);
+  const [showCancelFlow, setShowCancelFlow] = useState(false);
   const [deleteStep, setDeleteStep] = useState(1);
+  const [cancelStep, setCancelStep] = useState(1);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
 
   useEffect(() => {
     setProfile(getUserProfile());
@@ -57,27 +61,82 @@ export const SettingsPage = () => {
   const handleCancelSubscription = async () => {
     setIsCancelling(true);
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
+      const { data, error } = await supabase.functions.invoke('cancel-subscription');
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        setCancelStep(2); // Show confirmation page
+      } else if (data?.error) {
+        toast.error(data.error);
+        setShowCancelFlow(false);
+      }
+    } catch (error) {
+      toast.error(language === 'en' 
+        ? 'Failed to cancel subscription. Please contact support.'
+        : 'Error al cancelar suscripción. Por favor contacta soporte.'
+      );
+      setShowCancelFlow(false);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleCancelComplete = async () => {
+    // Sign out and redirect to login
+    await supabase.auth.signOut();
+    clearAllData();
+    navigate('/auth');
+  };
+
+  const handleUpdatePaymentMethod = async () => {
+    setIsUpdatingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('update-payment-method');
       
       if (error) throw error;
       
       if (data?.url) {
-        window.open(data.url, '_blank');
-      } else if (data?.supportEmail) {
-        toast.info(language === 'en' 
-          ? `Please contact support at ${data.supportEmail} to manage your subscription.`
-          : `Por favor contacta a soporte en ${data.supportEmail} para gestionar tu suscripción.`
-        );
-      } else {
-        toast.error(language === 'en' ? 'Unable to open subscription portal' : 'No se pudo abrir el portal de suscripción');
+        window.location.href = data.url;
+      } else if (data?.error) {
+        toast.error(data.error);
       }
     } catch (error) {
       toast.error(language === 'en' 
-        ? 'Please contact support@steadystepsapp.com to cancel your subscription'
-        : 'Por favor contacta a support@steadystepsapp.com para cancelar tu suscripción'
+        ? 'Failed to open payment update. Please try again.'
+        : 'Error al abrir actualización de pago. Intenta de nuevo.'
       );
     } finally {
-      setIsCancelling(false);
+      setIsUpdatingPayment(false);
+    }
+  };
+
+  const handleDownloadData = async () => {
+    setIsDownloading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('download-data');
+      
+      if (error) throw error;
+      
+      // Create and download the file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `steadysteps-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success(language === 'en' ? 'Data downloaded successfully!' : '¡Datos descargados exitosamente!');
+    } catch (error) {
+      toast.error(language === 'en' 
+        ? 'Failed to download data. Please try again.'
+        : 'Error al descargar datos. Intenta de nuevo.'
+      );
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -86,7 +145,6 @@ export const SettingsPage = () => {
     
     setIsDeleting(true);
     try {
-      // Call the delete-account edge function to wipe all data
       const { data, error } = await supabase.functions.invoke('delete-account');
       
       if (error) {
@@ -107,19 +165,29 @@ export const SettingsPage = () => {
   };
 
   const handleDeleteComplete = () => {
+    // Redirect to language selection page (first onboarding step)
+    localStorage.removeItem('steadysteps_language');
     window.location.href = '/';
   };
 
   const texts = {
     en: {
       subscription: 'Subscription',
-      manageSubscription: 'Manage Subscription',
-      manageSubscriptionDesc: 'Update payment method or change plan',
+      manageSubscription: 'Update Payment Method',
+      manageSubscriptionDesc: 'Change your card or payment details',
       cancelSubscription: 'Cancel Subscription',
       cancelSubscriptionDesc: 'Cancel your SteadySteps subscription',
+      cancelConfirmTitle: 'Cancel Subscription?',
+      cancelConfirmDesc: 'Are you sure you want to cancel your subscription? You will lose access to all premium features.',
+      cancelYes: 'Yes, Cancel',
+      cancelNo: 'No, Keep Subscription',
+      cancelledTitle: 'Subscription Cancelled',
+      cancelledDesc: 'Your subscription has been cancelled and your payment information has been removed. Thank you for using SteadySteps.',
+      returnToLogin: 'Return to Login',
       privacy: 'Privacy',
       downloadData: 'Download My Data',
       downloadDataDesc: 'Get a copy of your SteadySteps data',
+      downloading: 'Downloading...',
       deleteAccountDesc: 'Permanently delete your account and all data',
       dangerZone: 'Danger Zone',
       resetDesc: 'Reset all your progress and start fresh. This action cannot be undone.',
@@ -130,13 +198,21 @@ export const SettingsPage = () => {
     },
     es: {
       subscription: 'Suscripción',
-      manageSubscription: 'Gestionar Suscripción',
-      manageSubscriptionDesc: 'Actualizar método de pago o cambiar plan',
+      manageSubscription: 'Actualizar Método de Pago',
+      manageSubscriptionDesc: 'Cambiar tu tarjeta o detalles de pago',
       cancelSubscription: 'Cancelar Suscripción',
       cancelSubscriptionDesc: 'Cancela tu suscripción de SteadySteps',
+      cancelConfirmTitle: '¿Cancelar Suscripción?',
+      cancelConfirmDesc: '¿Estás segura de que quieres cancelar tu suscripción? Perderás acceso a todas las funciones premium.',
+      cancelYes: 'Sí, Cancelar',
+      cancelNo: 'No, Mantener Suscripción',
+      cancelledTitle: 'Suscripción Cancelada',
+      cancelledDesc: 'Tu suscripción ha sido cancelada y tu información de pago ha sido eliminada. Gracias por usar SteadySteps.',
+      returnToLogin: 'Volver al Inicio de Sesión',
       privacy: 'Privacidad',
       downloadData: 'Descargar Mis Datos',
       downloadDataDesc: 'Obtén una copia de tus datos de SteadySteps',
+      downloading: 'Descargando...',
       deleteAccountDesc: 'Eliminar permanentemente tu cuenta y todos tus datos',
       dangerZone: 'Zona de Peligro',
       resetDesc: 'Reinicia todo tu progreso y comienza de nuevo. Esta acción no se puede deshacer.',
@@ -148,6 +224,63 @@ export const SettingsPage = () => {
   };
 
   const localT = texts[language];
+
+  // Cancel Subscription Flow
+  if (showCancelFlow) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
+          {cancelStep === 1 && (
+            <button 
+              onClick={() => { setShowCancelFlow(false); setCancelStep(1); }}
+              className="flex items-center gap-2 text-muted-foreground mb-4 min-h-[44px] min-w-[44px]"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>{t('common.back')}</span>
+            </button>
+          )}
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+          {cancelStep === 1 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-sm text-center">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+                <XCircle className="w-8 h-8 text-destructive" />
+              </div>
+              <h1 className="text-2xl font-heading font-bold mb-4">{localT.cancelConfirmTitle}</h1>
+              <p className="text-muted-foreground mb-8">{localT.cancelConfirmDesc}</p>
+              <div className="space-y-3">
+                <Button onClick={() => setShowCancelFlow(false)} className="w-full">
+                  {localT.cancelNo}
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleCancelSubscription}
+                  disabled={isCancelling}
+                  className="w-full"
+                >
+                  {isCancelling ? t('common.loading') : localT.cancelYes}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {cancelStep === 2 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-sm text-center">
+              <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-8 h-8 text-success" />
+              </div>
+              <h1 className="text-2xl font-heading font-bold mb-4">{localT.cancelledTitle}</h1>
+              <p className="text-muted-foreground mb-8">{localT.cancelledDesc}</p>
+              <Button onClick={handleCancelComplete} className="w-full">
+                {localT.returnToLogin}
+              </Button>
+            </motion.div>
+          )}
+        </main>
+      </div>
+    );
+  }
 
   // Delete Account Flow
   if (showDeleteFlow) {
@@ -291,8 +424,9 @@ export const SettingsPage = () => {
           
           <div className="space-y-2">
             <button 
-              onClick={() => navigate('/subscription')}
-              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
+              onClick={handleUpdatePaymentMethod}
+              disabled={isUpdatingPayment}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors disabled:opacity-50"
             >
               <CreditCard className="w-5 h-5 text-muted-foreground" />
               <div className="text-left flex-1">
@@ -302,9 +436,8 @@ export const SettingsPage = () => {
             </button>
             
             <button 
-              onClick={handleCancelSubscription}
-              disabled={isCancelling}
-              className="w-full p-4 rounded-xl border border-destructive/30 bg-background flex items-center gap-4 hover:border-destructive/50 transition-colors disabled:opacity-50"
+              onClick={() => setShowCancelFlow(true)}
+              className="w-full p-4 rounded-xl border border-destructive/30 bg-background flex items-center gap-4 hover:border-destructive/50 transition-colors"
             >
               <XCircle className="w-5 h-5 text-destructive" />
               <div className="text-left flex-1">
@@ -380,10 +513,14 @@ export const SettingsPage = () => {
           </h2>
           
           <div className="space-y-2">
-            <button className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors">
+            <button 
+              onClick={handleDownloadData}
+              disabled={isDownloading}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors disabled:opacity-50"
+            >
               <Download className="w-5 h-5 text-muted-foreground" />
               <div className="text-left flex-1">
-                <p className="font-medium">{localT.downloadData}</p>
+                <p className="font-medium">{isDownloading ? localT.downloading : localT.downloadData}</p>
                 <p className="text-sm text-muted-foreground">{localT.downloadDataDesc}</p>
               </div>
             </button>
@@ -401,7 +538,7 @@ export const SettingsPage = () => {
           </div>
         </motion.section>
 
-        {/* Quick Links */}
+        {/* Quick Links - Removed Subscription, kept Legal and Help */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -411,15 +548,6 @@ export const SettingsPage = () => {
           <h2 className="font-heading font-semibold mb-4">{language === 'en' ? 'More' : 'Más'}</h2>
           
           <div className="space-y-2">
-            <button 
-              onClick={() => navigate('/subscription')}
-              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
-            >
-              <CreditCard className="w-5 h-5 text-muted-foreground" />
-              <span className="flex-1 text-left font-medium">{language === 'en' ? 'Subscription' : 'Suscripción'}</span>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </button>
-            
             <button 
               onClick={() => navigate('/legal')}
               className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"

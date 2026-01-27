@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Copy, Share2, Gift, Trophy, Award, Users, UserPlus, Crown } from 'lucide-react';
+import { ArrowLeft, Copy, Share2, Gift, Trophy, Award, UserPlus, Crown, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -21,9 +21,11 @@ export const CommunityPage = () => {
     freeMonthsEarned: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [hasNewReward, setHasNewReward] = useState(false);
   
   const referralCode = user?.id?.slice(0, 8) || 'demo';
-  const referralLink = `https://steadysteps.app/join?ref=${referralCode}`;
+  // Use the published URL for referral links
+  const referralLink = `https://steadysteps.lovable.app/auth?ref=${referralCode}`;
   
   const texts = {
     en: {
@@ -46,9 +48,8 @@ export const CommunityPage = () => {
       progressTitle: 'Your Progress',
       progressDesc: 'referrals until your next free month',
       rewardUnlocked: '🎉 You earned a free month!',
-      buddies: 'Find Accountability Buddies',
-      buddiesDesc: 'Connect with other SteadySteps members for extra motivation',
-      viewBuddies: 'View Buddies',
+      newReward: 'New Reward!',
+      newRewardDesc: 'You earned a free month from your referrals!',
       badges: 'Your Badges',
       viewBadges: 'View All Badges',
     },
@@ -72,9 +73,8 @@ export const CommunityPage = () => {
       progressTitle: 'Tu Progreso',
       progressDesc: 'referidos para tu próximo mes gratis',
       rewardUnlocked: '🎉 ¡Ganaste un mes gratis!',
-      buddies: 'Encuentra Amigas de Responsabilidad',
-      buddiesDesc: 'Conéctate con otros miembros de SteadySteps para motivación extra',
-      viewBuddies: 'Ver Amigas',
+      newReward: '¡Nueva Recompensa!',
+      newRewardDesc: '¡Ganaste un mes gratis de tus referidos!',
       badges: 'Tus Insignias',
       viewBadges: 'Ver Todas las Insignias',
     },
@@ -100,6 +100,12 @@ export const CommunityPage = () => {
         const invited = referrals?.length || 0;
         const paidSignups = referrals?.filter(r => r.status === 'paid')?.length || 0;
         const freeMonthsEarned = Math.floor(paidSignups / 2);
+
+        // Check if user has a new reward (they just hit an even number of paid signups)
+        const previousFreeMonths = Math.floor((paidSignups - 1) / 2);
+        if (freeMonthsEarned > previousFreeMonths && paidSignups > 0 && paidSignups % 2 === 0) {
+          setHasNewReward(true);
+        }
 
         setReferralStats({ invited, paidSignups, freeMonthsEarned });
       } catch (error) {
@@ -154,6 +160,28 @@ export const CommunityPage = () => {
       </header>
 
       <main className="px-6 py-6 space-y-6">
+        {/* New Reward Notification */}
+        {hasNewReward && (
+          <motion.section
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-6 rounded-2xl bg-success/10 border-2 border-success"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <Bell className="w-6 h-6 text-success" />
+              <h2 className="text-xl font-heading font-bold text-success">{t.newReward}</h2>
+            </div>
+            <p className="text-sm text-success/90">{t.newRewardDesc}</p>
+            <Button 
+              onClick={() => setHasNewReward(false)} 
+              variant="outline" 
+              className="mt-4 border-success text-success hover:bg-success/10"
+            >
+              {language === 'en' ? 'Dismiss' : 'Cerrar'}
+            </Button>
+          </motion.section>
+        )}
+
         {/* Share Section */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -194,7 +222,7 @@ export const CommunityPage = () => {
             <h2 className="text-xl font-heading font-bold">{t.progressTitle}</h2>
           </div>
           
-          {referralsToNextReward === 0 ? (
+          {referralsToNextReward === 0 || (referralStats.paidSignups > 0 && referralStats.paidSignups % 2 === 0) ? (
             <div className="p-4 rounded-xl bg-success/10 border border-success/30 text-center">
               <p className="text-lg font-semibold text-success">{t.rewardUnlocked}</p>
             </div>
@@ -269,28 +297,11 @@ export const CommunityPage = () => {
           </div>
         </motion.section>
 
-        {/* Buddies Section */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="p-6 rounded-2xl border-2 border-border bg-card"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <Users className="w-6 h-6 text-primary" />
-            <h2 className="text-xl font-heading font-bold">{t.buddies}</h2>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">{t.buddiesDesc}</p>
-          <Button onClick={() => navigate('/buddies')} variant="outline" className="w-full">
-            {t.viewBuddies}
-          </Button>
-        </motion.section>
-
         {/* Badges Section */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.25 }}
           className="p-6 rounded-2xl border-2 border-border bg-card"
         >
           <div className="flex items-center gap-3 mb-2">
