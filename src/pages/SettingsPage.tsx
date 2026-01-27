@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle, LogOut } from 'lucide-react';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -170,6 +170,12 @@ export const SettingsPage = () => {
     window.location.href = '/';
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    clearAllData();
+    navigate('/auth');
+  };
+
   const texts = {
     en: {
       subscription: 'Subscription',
@@ -189,6 +195,8 @@ export const SettingsPage = () => {
       downloadDataDesc: 'Get a copy of your SteadySteps data',
       downloading: 'Downloading...',
       deleteAccountDesc: 'Permanently delete your account and all data',
+      logOut: 'Log Out',
+      logOutDesc: 'Sign out of your account',
       dangerZone: 'Danger Zone',
       resetDesc: 'Reset all your progress and start fresh. This action cannot be undone.',
       resetButton: 'Reset All Progress',
@@ -214,6 +222,8 @@ export const SettingsPage = () => {
       downloadDataDesc: 'Obtén una copia de tus datos de SteadySteps',
       downloading: 'Descargando...',
       deleteAccountDesc: 'Eliminar permanentemente tu cuenta y todos tus datos',
+      logOut: 'Cerrar Sesión',
+      logOutDesc: 'Salir de tu cuenta',
       dangerZone: 'Zona de Peligro',
       resetDesc: 'Reinicia todo tu progreso y comienza de nuevo. Esta acción no se puede deshacer.',
       resetButton: 'Reiniciar Todo el Progreso',
@@ -533,6 +543,17 @@ export const SettingsPage = () => {
               <div className="text-left flex-1">
                 <p className="font-medium text-destructive">{t('deleteAccount.title').replace('?', '')}</p>
                 <p className="text-sm text-muted-foreground">{localT.deleteAccountDesc}</p>
+              </div>
+            </button>
+
+            <button 
+              onClick={handleLogout}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
+            >
+              <LogOut className="w-5 h-5 text-muted-foreground" />
+              <div className="text-left flex-1">
+                <p className="font-medium">{localT.logOut}</p>
+                <p className="text-sm text-muted-foreground">{localT.logOutDesc}</p>
               </div>
             </button>
           </div>
