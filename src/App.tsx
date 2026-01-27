@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
+import ProfileSetupPage from "./pages/ProfileSetupPage";
 import { BadgesPage } from "./pages/BadgesPage";
 import { ProgressPage } from "./pages/ProgressPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -31,6 +32,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/profile-setup" element={<ProfileSetupPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/badges" element={<BadgesPage />} />
               <Route path="/progress" element={<ProgressPage />} />

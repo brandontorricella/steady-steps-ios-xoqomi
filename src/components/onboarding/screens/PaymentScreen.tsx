@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Shield, Sparkles, RefreshCw, ExternalLink } from 'lucide-react';
+import { Check, Shield, Sparkles, ExternalLink } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -13,66 +14,16 @@ interface PaymentScreenProps {
 
 export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
-  const [checkoutOpened, setCheckoutOpened] = useState(false);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
-
-  // Check subscription status
-  const checkSubscriptionStatus = useCallback(async () => {
-    setIsCheckingPayment(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) {
-        console.error('Subscription check error:', error);
-        return false;
-      }
-      
-      // Check if user has valid subscription
-      const hasValidSubscription = data && (
-        data.subscribed || 
-        data.status === 'active' || 
-        data.status === 'trialing'
-      );
-      
-      if (hasValidSubscription) {
-        toast.success(language === 'en' ? 'Payment confirmed! Welcome to SteadySteps.' : '¡Pago confirmado! Bienvenida a SteadySteps.');
-        onNext();
-        return true;
-      }
-      
-      return false;
-    } catch (err) {
-      console.error('Failed to check subscription:', err);
-      return false;
-    } finally {
-      setIsCheckingPayment(false);
-    }
-  }, [onNext, language]);
-
-  // Poll for payment completion after checkout is opened
-  useEffect(() => {
-    if (!checkoutOpened) return;
-    
-    const pollInterval = setInterval(async () => {
-      const isSubscribed = await checkSubscriptionStatus();
-      if (isSubscribed) {
-        clearInterval(pollInterval);
-      }
-    }, 5000); // Check every 5 seconds
-    
-    return () => clearInterval(pollInterval);
-  }, [checkoutOpened, checkSubscriptionStatus]);
 
   // Detect iOS WebView
   const isIOSWebView = () => {
     const userAgent = navigator.userAgent || '';
     const isIOS = /iPhone|iPad|iPod/.test(userAgent);
-    // Check if it's a WebView (not Safari browser)
     const isWebView = isIOS && !/Safari/.test(userAgent);
-    // Also consider standalone PWA mode
     const isStandalone = (window.navigator as any).standalone === true;
     return isIOS && (isWebView || isStandalone);
   };
@@ -86,27 +37,27 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
 
       if (error) throw error;
       if (data?.url) {
-        // Ensure HTTPS
         const checkoutUrl = data.url.startsWith('https://') ? data.url : data.url.replace('http://', 'https://');
         
         if (isIOSWebView()) {
-          // iOS WebView: Open in external browser (Safari)
-          window.location.href = checkoutUrl;
+          // iOS WebView: Redirect to external browser (Safari)
           toast.info(
             language === 'en' 
               ? 'Opening payment in Safari. Return to the app after completing.' 
               : 'Abriendo pago en Safari. Regresa a la app después de completar.'
           );
+          window.location.href = checkoutUrl;
         } else {
-          // Desktop/Android: Open in new tab
+          // Desktop/Android: Open in new tab, then redirect to profile-setup
           window.open(checkoutUrl, '_blank');
           toast.info(
             language === 'en' 
-              ? 'Complete payment in the new tab, then return here.' 
-              : 'Completa el pago en la nueva pestaña, luego regresa aquí.'
+              ? 'Complete payment in the new tab. You will be redirected after.' 
+              : 'Completa el pago en la nueva pestaña. Serás redirigido después.'
           );
+          // Redirect to profile-setup page where they can verify payment
+          navigate('/profile-setup');
         }
-        setCheckoutOpened(true);
       }
     } catch (error) {
       console.error('Checkout error:', error);
@@ -216,71 +167,31 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         ))}
       </motion.div>
 
-      {/* CTA Buttons */}
+      {/* CTA Button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
         className="space-y-3 mt-auto"
       >
-        {!checkoutOpened ? (
-          <Button
-            size="lg"
-            onClick={handleStartTrial}
-            disabled={isLoading}
-            className="w-full py-6 text-lg font-semibold"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                {t('common.loading')}
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5 mr-2" />
-                {t('payment.startTrial')}
-              </>
-            )}
-          </Button>
-        ) : (
-          <>
-            <Button
-              size="lg"
-              onClick={checkSubscriptionStatus}
-              disabled={isCheckingPayment}
-              className="w-full py-6 text-lg font-semibold"
-            >
-              {isCheckingPayment ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                  {language === 'en' ? 'Verifying...' : 'Verificando...'}
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-5 h-5 mr-2" />
-                  {language === 'en' ? "I've Completed Payment" : "He Completado el Pago"}
-                </>
-              )}
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleStartTrial}
-              disabled={isLoading}
-              className="w-full py-5"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              {language === 'en' ? 'Reopen Checkout' : 'Reabrir Pago'}
-            </Button>
-            
-            <p className="text-center text-xs text-muted-foreground animate-pulse">
-              {language === 'en' 
-                ? 'Automatically checking for payment completion...' 
-                : 'Verificando automáticamente el pago...'}
-            </p>
-          </>
-        )}
+        <Button
+          size="lg"
+          onClick={handleStartTrial}
+          disabled={isLoading}
+          className="w-full py-6 text-lg font-semibold"
+        >
+          {isLoading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+              {t('common.loading')}
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5 mr-2" />
+              {t('payment.startTrial')}
+            </>
+          )}
+        </Button>
 
         <p className="text-center text-xs text-muted-foreground">
           <Shield className="w-3 h-3 inline mr-1" />
