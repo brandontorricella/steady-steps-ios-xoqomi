@@ -66,6 +66,17 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
     return () => clearInterval(pollInterval);
   }, [checkoutOpened, checkSubscriptionStatus]);
 
+  // Detect iOS WebView
+  const isIOSWebView = () => {
+    const userAgent = navigator.userAgent || '';
+    const isIOS = /iPhone|iPad|iPod/.test(userAgent);
+    // Check if it's a WebView (not Safari browser)
+    const isWebView = isIOS && !/Safari/.test(userAgent);
+    // Also consider standalone PWA mode
+    const isStandalone = (window.navigator as any).standalone === true;
+    return isIOS && (isWebView || isStandalone);
+  };
+
   const handleStartTrial = async () => {
     setIsLoading(true);
     try {
@@ -75,14 +86,27 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
 
       if (error) throw error;
       if (data?.url) {
-        // Open checkout in new tab
-        window.open(data.url, '_blank');
+        // Ensure HTTPS
+        const checkoutUrl = data.url.startsWith('https://') ? data.url : data.url.replace('http://', 'https://');
+        
+        if (isIOSWebView()) {
+          // iOS WebView: Open in external browser (Safari)
+          window.location.href = checkoutUrl;
+          toast.info(
+            language === 'en' 
+              ? 'Opening payment in Safari. Return to the app after completing.' 
+              : 'Abriendo pago en Safari. Regresa a la app después de completar.'
+          );
+        } else {
+          // Desktop/Android: Open in new tab
+          window.open(checkoutUrl, '_blank');
+          toast.info(
+            language === 'en' 
+              ? 'Complete payment in the new tab, then return here.' 
+              : 'Completa el pago en la nueva pestaña, luego regresa aquí.'
+          );
+        }
         setCheckoutOpened(true);
-        toast.info(
-          language === 'en' 
-            ? 'Complete payment in the new tab, then return here.' 
-            : 'Completa el pago en la nueva pestaña, luego regresa aquí.'
-        );
       }
     } catch (error) {
       console.error('Checkout error:', error);
