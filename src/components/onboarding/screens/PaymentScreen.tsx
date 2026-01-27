@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Shield, Sparkles, ExternalLink } from 'lucide-react';
+import { Check, Shield, Sparkles } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
+import { isNativeApp } from '@/hooks/useDeepLinks';
 
 interface PaymentScreenProps {
   onNext: () => void;
@@ -19,7 +20,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
 
-  // Detect iOS WebView
+  // Detect iOS WebView or native app
   const isIOSWebView = () => {
     const userAgent = navigator.userAgent || '';
     const isIOS = /iPhone|iPad|iPod/.test(userAgent);
@@ -31,8 +32,12 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const handleStartTrial = async () => {
     setIsLoading(true);
     try {
+      const isNative = isNativeApp();
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { isAnnual: selectedPlan === 'annual' },
+        body: { 
+          isAnnual: selectedPlan === 'annual',
+          isNativeApp: isNative // Pass flag for deep link URLs
+        },
       });
 
       if (error) throw error;
