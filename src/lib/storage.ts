@@ -117,6 +117,9 @@ export const clearAllData = (): void => {
   localStorage.removeItem(STORAGE_KEYS.LAST_TIP_DATE);
 };
 
+// Alias for clearAllData for semantic clarity
+export const clearUserProfile = clearAllData;
+
 export const calculatePoints = (activityCompleted: boolean, nutritionResponses: (boolean | null)[], streak: number): number => {
   let points = 10; // Base check-in points
   

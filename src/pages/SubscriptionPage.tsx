@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, CreditCard, Check, AlertTriangle, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -10,11 +10,12 @@ import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 
 export const SubscriptionPage = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [showCancelFlow, setShowCancelFlow] = useState(false);
   const [cancelStep, setCancelStep] = useState(1);
   const [cancelConfirmed, setCancelConfirmed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isChangingPlan, setIsChangingPlan] = useState(false);
 
   const handleManageSubscription = async () => {
     try {
@@ -23,6 +24,37 @@ export const SubscriptionPage = () => {
       if (data?.url) window.open(data.url, '_blank');
     } catch (error) {
       toast.error('Unable to open subscription management');
+    }
+  };
+
+  // Handle plan change - opens Stripe checkout with the new plan
+  const handleChangePlan = async (isAnnual: boolean) => {
+    setIsChangingPlan(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { isAnnual },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        const checkoutUrl = data.url.startsWith('https://') ? data.url : data.url.replace('http://', 'https://');
+        
+        // Detect iOS
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
+        const isWebView = isIOS && !/Safari/.test(navigator.userAgent || '');
+        const isStandalone = (window.navigator as any).standalone === true;
+        
+        if (isIOS && (isWebView || isStandalone)) {
+          window.location.href = checkoutUrl;
+        } else {
+          window.open(checkoutUrl, '_blank');
+        }
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error(language === 'en' ? 'Unable to start checkout' : 'No se pudo iniciar el pago');
+    } finally {
+      setIsChangingPlan(false);
     }
   };
 
@@ -178,10 +210,61 @@ export const SubscriptionPage = () => {
           <p className="text-sm text-muted-foreground">$4.99/month</p>
         </motion.section>
 
+        {/* Plan Change Options */}
         <motion.section 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
-          transition={{ delay: 0.1 }} 
+          transition={{ delay: 0.15 }} 
+          className="p-6 rounded-2xl border-2 border-border bg-card"
+        >
+          <h2 className="font-heading font-semibold mb-4">
+            {language === 'en' ? 'Change Your Plan' : 'Cambiar Tu Plan'}
+          </h2>
+          <div className="space-y-3">
+            <button
+              onClick={() => handleChangePlan(false)}
+              disabled={isChangingPlan}
+              className="w-full p-4 rounded-xl border-2 border-primary bg-primary/5 flex items-center justify-between"
+            >
+              <div className="text-left">
+                <p className="font-semibold">{language === 'en' ? 'Monthly' : 'Mensual'}</p>
+                <p className="text-sm text-muted-foreground">$4.99/month</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-primary font-bold">$4.99</span>
+                <Check className="w-5 h-5 text-primary" />
+              </div>
+            </button>
+            
+            <button
+              onClick={() => handleChangePlan(true)}
+              disabled={isChangingPlan}
+              className="w-full p-4 rounded-xl border-2 border-border hover:border-primary/50 flex items-center justify-between relative transition-colors"
+            >
+              <div className="absolute -top-2 left-4 px-2 py-0.5 bg-gold text-gold-foreground text-xs font-semibold rounded-full">
+                {language === 'en' ? 'Save 50%' : 'Ahorra 50%'}
+              </div>
+              <div className="text-left">
+                <p className="font-semibold">{language === 'en' ? 'Annual' : 'Anual'}</p>
+                <p className="text-sm text-muted-foreground">$29.99/year</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold">$29.99</span>
+                <Sparkles className="w-5 h-5 text-gold" />
+              </div>
+            </button>
+          </div>
+          {isChangingPlan && (
+            <p className="text-center text-sm text-muted-foreground mt-3 animate-pulse">
+              {language === 'en' ? 'Opening payment...' : 'Abriendo pago...'}
+            </p>
+          )}
+        </motion.section>
+
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.2 }} 
           className="p-6 rounded-2xl border-2 border-border bg-card"
         >
           <h2 className="font-heading font-semibold mb-4">{t('subscription.paymentMethod')}</h2>
