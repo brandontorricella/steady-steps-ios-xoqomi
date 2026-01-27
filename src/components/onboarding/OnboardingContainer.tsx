@@ -16,12 +16,16 @@ import { StartingPointScreen } from './screens/StartingPointScreen';
 import { FirstDayScreen } from './screens/FirstDayScreen';
 import { UserProfile, getActivityGoalFromCommitment } from '@/lib/types';
 import { saveUserProfile, getDefaultUserProfile } from '@/lib/storage';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfileSync } from '@/hooks/useProfileSync';
 
 interface OnboardingContainerProps {
   onComplete: () => void;
 }
 
 export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) => {
+  const { user } = useAuth();
+  const { syncProfileToDatabase } = useProfileSync();
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<UserProfile>(getDefaultUserProfile());
   const [email, setEmail] = useState('');
@@ -34,7 +38,7 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
     setStep(step + 1);
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const finalProfile = {
       ...profile,
       email,
@@ -43,7 +47,15 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
       trialStartDate: new Date().toISOString(),
       subscriptionStatus: 'trial' as const,
     };
+    
+    // Save to local storage
     saveUserProfile(finalProfile);
+    
+    // If user is authenticated, also save to database
+    if (user) {
+      await syncProfileToDatabase(finalProfile, user.id);
+    }
+    
     onComplete();
   };
 

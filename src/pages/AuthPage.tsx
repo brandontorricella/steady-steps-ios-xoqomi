@@ -8,11 +8,13 @@ import { toast } from 'sonner';
 import { Mail, Lock, Heart, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useProfileSync } from '@/hooks/useProfileSync';
 
 export const AuthPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { language } = useLanguage();
+  const { fetchAndSyncProfile } = useProfileSync();
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset-sent'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,11 +34,17 @@ export const AuthPage = () => {
 
     try {
       if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
+        
+        // Fetch and sync profile from database
+        if (data.user) {
+          await fetchAndSyncProfile(data.user.id);
+        }
+        
         toast.success(language === 'en' ? 'Welcome back!' : '¡Bienvenida de nuevo!');
         navigate('/');
       } else if (mode === 'signup') {
