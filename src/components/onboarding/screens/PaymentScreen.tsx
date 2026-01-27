@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Shield, Sparkles } from 'lucide-react';
+import { Check, Shield, Sparkles, RefreshCw, ExternalLink } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,10 +12,59 @@ interface PaymentScreenProps {
 }
 
 export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const [checkoutOpened, setCheckoutOpened] = useState(false);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
+
+  // Check subscription status
+  const checkSubscriptionStatus = useCallback(async () => {
+    setIsCheckingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) {
+        console.error('Subscription check error:', error);
+        return false;
+      }
+      
+      // Check if user has valid subscription
+      const hasValidSubscription = data && (
+        data.subscribed || 
+        data.status === 'active' || 
+        data.status === 'trialing'
+      );
+      
+      if (hasValidSubscription) {
+        toast.success(language === 'en' ? 'Payment confirmed! Welcome to SteadySteps.' : '¡Pago confirmado! Bienvenida a SteadySteps.');
+        onNext();
+        return true;
+      }
+      
+      return false;
+    } catch (err) {
+      console.error('Failed to check subscription:', err);
+      return false;
+    } finally {
+      setIsCheckingPayment(false);
+    }
+  }, [onNext, language]);
+
+  // Poll for payment completion after checkout is opened
+  useEffect(() => {
+    if (!checkoutOpened) return;
+    
+    const pollInterval = setInterval(async () => {
+      const isSubscribed = await checkSubscriptionStatus();
+      if (isSubscribed) {
+        clearInterval(pollInterval);
+      }
+    }, 5000); // Check every 5 seconds
+    
+    return () => clearInterval(pollInterval);
+  }, [checkoutOpened, checkSubscriptionStatus]);
 
   const handleStartTrial = async () => {
     setIsLoading(true);
@@ -26,16 +75,18 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
 
       if (error) throw error;
       if (data?.url) {
+        // Open checkout in new tab
         window.open(data.url, '_blank');
-        // Wait for user to complete payment
-        setTimeout(() => {
-          toast.success(t('common.done'));
-          onNext();
-        }, 1000);
+        setCheckoutOpened(true);
+        toast.info(
+          language === 'en' 
+            ? 'Complete payment in the new tab, then return here.' 
+            : 'Completa el pago en la nueva pestaña, luego regresa aquí.'
+        );
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('Unable to start checkout. Please try again.');
+      toast.error(language === 'en' ? 'Unable to start checkout. Please try again.' : 'No se pudo iniciar el pago. Intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -141,22 +192,71 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         ))}
       </motion.div>
 
-      {/* CTA Button */}
+      {/* CTA Buttons */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="space-y-4 mt-auto"
+        className="space-y-3 mt-auto"
       >
-        <Button
-          size="lg"
-          onClick={handleStartTrial}
-          disabled={isLoading}
-          className="w-full py-6 text-lg font-semibold"
-        >
-          <Sparkles className="w-5 h-5 mr-2" />
-          {isLoading ? t('common.loading') : t('payment.startTrial')}
-        </Button>
+        {!checkoutOpened ? (
+          <Button
+            size="lg"
+            onClick={handleStartTrial}
+            disabled={isLoading}
+            className="w-full py-6 text-lg font-semibold"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                {t('common.loading')}
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5 mr-2" />
+                {t('payment.startTrial')}
+              </>
+            )}
+          </Button>
+        ) : (
+          <>
+            <Button
+              size="lg"
+              onClick={checkSubscriptionStatus}
+              disabled={isCheckingPayment}
+              className="w-full py-6 text-lg font-semibold"
+            >
+              {isCheckingPayment ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                  {language === 'en' ? 'Verifying...' : 'Verificando...'}
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-5 h-5 mr-2" />
+                  {language === 'en' ? "I've Completed Payment" : "He Completado el Pago"}
+                </>
+              )}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleStartTrial}
+              disabled={isLoading}
+              className="w-full py-5"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              {language === 'en' ? 'Reopen Checkout' : 'Reabrir Pago'}
+            </Button>
+            
+            <p className="text-center text-xs text-muted-foreground animate-pulse">
+              {language === 'en' 
+                ? 'Automatically checking for payment completion...' 
+                : 'Verificando automáticamente el pago...'}
+            </p>
+          </>
+        )}
 
         <p className="text-center text-xs text-muted-foreground">
           <Shield className="w-3 h-3 inline mr-1" />
