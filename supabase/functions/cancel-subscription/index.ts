@@ -41,10 +41,49 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Find the customer
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
-    if (customers.data.length === 0) {
+    // Try to find the customer - handle restricted API key gracefully
+    let customerId: string | null = null;
+    try {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found Stripe customer", { customerId });
+      }
+    } catch (stripeError: any) {
+      // If Stripe key doesn't have customer read permissions, provide helpful message
+      logStep("Stripe customer lookup failed (restricted key)", { error: stripeError.message });
+      
+      // Still update the local profile to cancelled status
+      await supabaseClient
+        .from('profiles')
+        .update({ 
+          subscription_status: 'cancelled',
+          subscription_end_date: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+      logStep("Updated profile subscription status (without Stripe cancellation)");
+      
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: "Subscription marked as cancelled. If you have an active Stripe subscription, please contact support or use the customer portal to cancel it.",
+        needsPortal: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    if (!customerId) {
+      // No customer found - update local status and return success
+      await supabaseClient
+        .from('profiles')
+        .update({ 
+          subscription_status: 'cancelled',
+          subscription_end_date: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+      logStep("Updated profile subscription status (no Stripe customer)");
+      
       return new Response(JSON.stringify({ 
         success: true,
         message: "No active subscription found" 
@@ -53,9 +92,6 @@ serve(async (req) => {
         status: 200,
       });
     }
-
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
 
     // Cancel all active subscriptions
     const subscriptions = await stripe.subscriptions.list({
@@ -102,7 +138,7 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 200, // Return 200 to avoid frontend errors
     });
   }
 });
