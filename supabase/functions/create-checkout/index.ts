@@ -20,8 +20,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
     
-    const { priceId, isAnnual } = await req.json();
-    logStep("Received request", { priceId, isAnnual });
+    const { priceId, isAnnual, isNativeApp } = await req.json();
+    logStep("Received request", { priceId, isAnnual, isNativeApp });
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -54,12 +54,21 @@ serve(async (req) => {
     // After trial, Stripe automatically charges the payment method
     const origin = req.headers.get("origin") || "https://steadysteps.app";
     
+    // For native iOS apps, use deep link scheme for return URLs
+    // This allows the app to be reopened directly from Safari
+    const successUrl = isNativeApp 
+      ? 'steadysteps://profile-setup?payment=success'
+      : `${origin}/profile-setup?payment=success`;
+    const cancelUrl = isNativeApp 
+      ? 'steadysteps://profile-setup?payment=cancel'
+      : `${origin}/profile-setup?payment=cancel`;
+    
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer_email: userEmail || undefined,
       payment_method_types: ['card'],
       mode: "subscription",
-      success_url: `${origin}/profile-setup?payment=success`,
-      cancel_url: `${origin}/profile-setup?payment=cancel`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       payment_method_collection: 'always',
       subscription_data: {
         trial_period_days: 7, // 7-day free trial

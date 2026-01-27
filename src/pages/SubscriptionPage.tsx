@@ -7,6 +7,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
+import { isNativeApp } from '@/hooks/useDeepLinks';
 
 export const SubscriptionPage = () => {
   const navigate = useNavigate();
@@ -31,8 +32,12 @@ export const SubscriptionPage = () => {
   const handleChangePlan = async (isAnnual: boolean) => {
     setIsChangingPlan(true);
     try {
+      const isNative = isNativeApp();
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { isAnnual },
+        body: { 
+          isAnnual,
+          isNativeApp: isNative // Pass flag for deep link URLs
+        },
       });
 
       if (error) throw error;
