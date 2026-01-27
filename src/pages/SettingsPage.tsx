@@ -104,7 +104,12 @@ export const SettingsPage = () => {
               <h1 className="text-2xl font-heading font-bold mb-4">{t('deleteAccount.title')}</h1>
               <p className="text-muted-foreground mb-6">{t('deleteAccount.warning')}</p>
               <ul className="text-left space-y-2 mb-8">
-                {(t('deleteAccount.consequences') as unknown as string[]).map((item: string, i: number) => (
+                {[
+                  t('deleteAccount.consequence1'),
+                  t('deleteAccount.consequence2'),
+                  t('deleteAccount.consequence3'),
+                  t('deleteAccount.consequence4'),
+                ].map((item: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <span className="text-destructive">•</span>
                     <span>{item}</span>

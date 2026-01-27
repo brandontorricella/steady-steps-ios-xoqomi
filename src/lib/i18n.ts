@@ -373,12 +373,10 @@ export const translations = {
     deleteAccount: {
       title: 'Delete Account?',
       warning: 'This action is permanent and cannot be undone. Deleting your account will:',
-      consequences: [
-        'Remove all your progress and badges',
-        'Cancel your subscription immediately',
-        'Delete all your personal data',
-        'Remove you from any buddy connections',
-      ],
+      consequence1: 'Remove all your progress and badges',
+      consequence2: 'Cancel your subscription immediately',
+      consequence3: 'Delete all your personal data',
+      consequence4: 'Remove you from any buddy connections',
       keepAccount: 'Keep My Account',
       continueDelete: 'Continue with Deletion',
       confirmTitle: 'Are you absolutely sure?',
@@ -759,12 +757,10 @@ export const translations = {
     deleteAccount: {
       title: '¿Eliminar Cuenta?',
       warning: 'Esta acción es permanente y no se puede deshacer. Eliminar tu cuenta:',
-      consequences: [
-        'Eliminará todo tu progreso e insignias',
-        'Cancelará tu suscripción inmediatamente',
-        'Eliminará todos tus datos personales',
-        'Te removerá de conexiones de amigas',
-      ],
+      consequence1: 'Eliminará todo tu progreso e insignias',
+      consequence2: 'Cancelará tu suscripción inmediatamente',
+      consequence3: 'Eliminará todos tus datos personales',
+      consequence4: 'Te removerá de conexiones de amigas',
       keepAccount: 'Mantener Mi Cuenta',
       continueDelete: 'Continuar con Eliminación',
       confirmTitle: '¿Estás completamente segura?',
