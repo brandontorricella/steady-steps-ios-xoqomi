@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, subMonths, addMonths } from 'date-fns';
 import { getDailyCheckins, getUserProfile } from '@/lib/storage';
 import { DailyCheckin, UserProfile, LEVELS, getStageDescription } from '@/lib/types';
-import { ArrowLeft, ChevronLeft, ChevronRight, Check, Minus } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Check, Minus, Award, BookOpen } from 'lucide-react';
 import { ProgressRing } from '@/components/ui/progress-ring';
+import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { useLanguage } from '@/hooks/useLanguage';
 
@@ -194,6 +195,31 @@ export const ProgressPage = () => {
               <span>Missed</span>
             </div>
           </div>
+        </motion.div>
+
+        {/* Quick Links */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="grid grid-cols-2 gap-4"
+        >
+          <Button
+            variant="outline"
+            onClick={() => navigate('/badges')}
+            className="h-auto py-4 flex flex-col gap-2"
+          >
+            <Award className="w-6 h-6 text-primary" />
+            <span>Badges</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/habit-library')}
+            className="h-auto py-4 flex flex-col gap-2"
+          >
+            <BookOpen className="w-6 h-6 text-primary" />
+            <span>Habit Library</span>
+          </Button>
         </motion.div>
       </main>
 
