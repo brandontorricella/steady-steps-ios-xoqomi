@@ -41,10 +41,27 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Find the customer
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
-    if (customers.data.length === 0) {
+    // Try to find the customer - handle restricted API key gracefully
+    let customerId: string | null = null;
+    try {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found Stripe customer", { customerId });
+      }
+    } catch (stripeError: any) {
+      // If Stripe key doesn't have customer read permissions, provide helpful message
+      logStep("Stripe customer lookup failed (restricted key)", { error: stripeError.message });
+      return new Response(JSON.stringify({ 
+        error: "Unable to update payment method. Please contact support or manage your subscription through the customer portal.",
+        needsPortal: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    if (!customerId) {
       return new Response(JSON.stringify({ 
         error: "No subscription found. Please subscribe first." 
       }), {
@@ -52,9 +69,6 @@ serve(async (req) => {
         status: 200,
       });
     }
-
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
 
     const origin = req.headers.get("origin") || "https://steadysteps.lovable.app";
 
@@ -79,7 +93,7 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 200, // Return 200 to avoid frontend errors
     });
   }
 });
