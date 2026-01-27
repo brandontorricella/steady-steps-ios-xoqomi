@@ -7,7 +7,6 @@ import { format, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
-import { isNativeApp } from '@/hooks/useDeepLinks';
 
 interface PaymentScreenProps {
   onNext: () => void;
@@ -20,7 +19,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
 
-  // Detect iOS WebView or native app
+  // Detect iOS WebView or standalone PWA
   const isIOSWebView = () => {
     const userAgent = navigator.userAgent || '';
     const isIOS = /iPhone|iPad|iPod/.test(userAgent);
@@ -32,11 +31,9 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const handleStartTrial = async () => {
     setIsLoading(true);
     try {
-      const isNative = isNativeApp();
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
-          isAnnual: selectedPlan === 'annual',
-          isNativeApp: isNative // Pass flag for deep link URLs
+          isAnnual: selectedPlan === 'annual'
         },
       });
 
@@ -45,7 +42,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         const checkoutUrl = data.url.startsWith('https://') ? data.url : data.url.replace('http://', 'https://');
         
         if (isIOSWebView()) {
-          // iOS WebView: Redirect to external browser (Safari)
+          // iOS WebView/PWA: Redirect to Safari
           toast.info(
             language === 'en' 
               ? 'Opening payment in Safari. Return to the app after completing.' 

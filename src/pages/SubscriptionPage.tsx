@@ -7,7 +7,6 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
-import { isNativeApp } from '@/hooks/useDeepLinks';
 
 export const SubscriptionPage = () => {
   const navigate = useNavigate();
@@ -32,19 +31,15 @@ export const SubscriptionPage = () => {
   const handleChangePlan = async (isAnnual: boolean) => {
     setIsChangingPlan(true);
     try {
-      const isNative = isNativeApp();
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
-          isAnnual,
-          isNativeApp: isNative // Pass flag for deep link URLs
-        },
+        body: { isAnnual },
       });
 
       if (error) throw error;
       if (data?.url) {
         const checkoutUrl = data.url.startsWith('https://') ? data.url : data.url.replace('http://', 'https://');
         
-        // Detect iOS
+        // Detect iOS WebView/PWA
         const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
         const isWebView = isIOS && !/Safari/.test(navigator.userAgent || '');
         const isStandalone = (window.navigator as any).standalone === true;

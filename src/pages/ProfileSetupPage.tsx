@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from 'sonner';
 import { clearUserProfile } from '@/lib/storage';
-import { isNativeApp } from '@/hooks/useDeepLinks';
 
 type PaymentStatus = 'pending' | 'paid' | 'verifying' | 'cancelling';
 
@@ -120,12 +119,8 @@ const ProfileSetupPage = () => {
   // Handle retry payment
   const handleRetryPayment = async () => {
     try {
-      const isNative = isNativeApp();
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
-          isAnnual: false,
-          isNativeApp: isNative // Pass flag for deep link URLs
-        },
+        body: { isAnnual: false },
       });
 
       if (error) throw error;
@@ -137,8 +132,8 @@ const ProfileSetupPage = () => {
         const isWebView = isIOS && !/Safari/.test(navigator.userAgent || '');
         const isStandalone = (window.navigator as any).standalone === true;
         
-        if (isIOS && (isWebView || isStandalone || isNative)) {
-          // iOS: Open in Safari, app will reopen via deep link
+        if (isIOS && (isWebView || isStandalone)) {
+          // iOS: Open in Safari
           window.location.href = checkoutUrl;
         } else {
           window.open(checkoutUrl, '_blank');
