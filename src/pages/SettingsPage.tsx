@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle } from 'lucide-react';
+import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight } from 'lucide-react';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -401,11 +401,50 @@ export const SettingsPage = () => {
           </div>
         </motion.section>
 
-        {/* Danger Zone (Reset) */}
+        {/* Quick Links */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="p-6 rounded-2xl border-2 border-border bg-card"
+        >
+          <h2 className="font-heading font-semibold mb-4">{language === 'en' ? 'More' : 'Más'}</h2>
+          
+          <div className="space-y-2">
+            <button 
+              onClick={() => navigate('/subscription')}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
+            >
+              <CreditCard className="w-5 h-5 text-muted-foreground" />
+              <span className="flex-1 text-left font-medium">{language === 'en' ? 'Subscription' : 'Suscripción'}</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            
+            <button 
+              onClick={() => navigate('/legal')}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
+            >
+              <FileText className="w-5 h-5 text-muted-foreground" />
+              <span className="flex-1 text-left font-medium">{language === 'en' ? 'Terms & Privacy' : 'Términos y Privacidad'}</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            
+            <button 
+              onClick={() => navigate('/help')}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
+            >
+              <HelpCircle className="w-5 h-5 text-muted-foreground" />
+              <span className="flex-1 text-left font-medium">{language === 'en' ? 'Help & Support' : 'Ayuda y Soporte'}</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        </motion.section>
+
+        {/* Danger Zone (Reset) */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
           className="p-6 rounded-2xl border-2 border-destructive/30 bg-card"
         >
           <h2 className="font-heading font-semibold mb-4 flex items-center gap-2 text-destructive">

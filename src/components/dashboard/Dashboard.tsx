@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
 import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
 import { getUserProfile, getTodayCheckin, getWeeklyStats } from '@/lib/storage';
-import { Flame, Trophy, Check, Settings2 } from 'lucide-react';
+import { Flame, Trophy, Check, Settings2, CalendarDays } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
 import { DailyTipCard } from './DailyTipCard';
 import { CoachTipCard } from './CoachTipCard';
@@ -17,6 +18,7 @@ import { CommunityNudge } from '@/components/feedback/CommunityNudge';
 import { useLanguage } from '@/hooks/useLanguage';
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showCheckin, setShowCheckin] = useState(false);
   const [todayCompleted, setTodayCompleted] = useState(false);
@@ -70,6 +72,7 @@ export const Dashboard = () => {
       points: 'points',
       stage: 'Stage',
       adjustGoals: 'Adjust Goals',
+      weeklySummary: 'Weekly Summary',
     },
     es: {
       currentStreak: 'Racha Actual',
@@ -85,6 +88,7 @@ export const Dashboard = () => {
       points: 'puntos',
       stage: 'Etapa',
       adjustGoals: 'Ajustar Metas',
+      weeklySummary: 'Resumen Semanal',
     },
   };
 
@@ -196,6 +200,14 @@ export const Dashboard = () => {
             <span>{weeklyStats.activityCompletions} {t.activities}</span>
             <span>{weeklyStats.nutritionScore} {t.nutritionHabits}</span>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/weekly-summary')}
+            className="w-full mt-4"
+          >
+            <CalendarDays className="w-4 h-4 mr-2" />
+            {t.weeklySummary}
+          </Button>
         </motion.div>
 
         {/* Level & Stage with Adjust Button */}
