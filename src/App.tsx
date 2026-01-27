@@ -18,6 +18,7 @@ import { WeeklySummaryPage } from "./pages/WeeklySummaryPage";
 import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { LegalPage } from "./pages/LegalPage";
 import { HelpPage } from "./pages/HelpPage";
+import { CommunityPage } from "./pages/CommunityPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/habit-library" element={<HabitLibraryPage />} />
               <Route path="/buddies" element={<BuddiesPage />} />
               <Route path="/referral" element={<ReferralPage />} />
+              <Route path="/community" element={<CommunityPage />} />
               <Route path="/weekly-summary" element={<WeeklySummaryPage />} />
               <Route path="/subscription" element={<SubscriptionPage />} />
               <Route path="/legal" element={<LegalPage />} />

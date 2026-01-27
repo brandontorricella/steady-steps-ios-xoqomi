@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield} from 'lucide-react';
+import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle } from 'lucide-react';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -32,6 +32,7 @@ export const SettingsPage = () => {
   const [deleteStep, setDeleteStep] = useState(1);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     setProfile(getUserProfile());
@@ -53,24 +54,52 @@ export const SettingsPage = () => {
   const confirmWord = language === 'es' ? 'ELIMINAR' : 'DELETE';
   const isConfirmValid = deleteConfirmText.toUpperCase() === confirmWord;
 
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else if (data?.supportEmail) {
+        toast.info(language === 'en' 
+          ? `Please contact support at ${data.supportEmail} to manage your subscription.`
+          : `Por favor contacta a soporte en ${data.supportEmail} para gestionar tu suscripción.`
+        );
+      } else {
+        toast.error(language === 'en' ? 'Unable to open subscription portal' : 'No se pudo abrir el portal de suscripción');
+      }
+    } catch (error) {
+      toast.error(language === 'en' 
+        ? 'Please contact support@steadystepsapp.com to cancel your subscription'
+        : 'Por favor contacta a support@steadystepsapp.com para cancelar tu suscripción'
+      );
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!isConfirmValid) return;
     
     setIsDeleting(true);
     try {
-      // Cancel Stripe subscription
-      try {
-        await supabase.functions.invoke('customer-portal');
-      } catch (e) {
-        console.log('No subscription to cancel');
+      // Call the delete-account edge function to wipe all data
+      const { data, error } = await supabase.functions.invoke('delete-account');
+      
+      if (error) {
+        console.error('Delete account error:', error);
+        throw error;
       }
       
-      // Sign out and clear data
-      await supabase.auth.signOut();
+      // Clear local data
       clearAllData();
       
       setDeleteStep(4);
     } catch (error) {
+      console.error('Delete account failed:', error);
       toast.error(t('common.error'));
     } finally {
       setIsDeleting(false);
@@ -80,6 +109,45 @@ export const SettingsPage = () => {
   const handleDeleteComplete = () => {
     window.location.href = '/';
   };
+
+  const texts = {
+    en: {
+      subscription: 'Subscription',
+      manageSubscription: 'Manage Subscription',
+      manageSubscriptionDesc: 'Update payment method or change plan',
+      cancelSubscription: 'Cancel Subscription',
+      cancelSubscriptionDesc: 'Cancel your SteadySteps subscription',
+      privacy: 'Privacy',
+      downloadData: 'Download My Data',
+      downloadDataDesc: 'Get a copy of your SteadySteps data',
+      deleteAccountDesc: 'Permanently delete your account and all data',
+      dangerZone: 'Danger Zone',
+      resetDesc: 'Reset all your progress and start fresh. This action cannot be undone.',
+      resetButton: 'Reset All Progress',
+      resetConfirmTitle: 'Are you absolutely sure?',
+      resetConfirmDesc: 'This will permanently delete all your progress, badges, and settings. You will need to complete onboarding again.',
+      resetConfirmButton: 'Yes, reset everything',
+    },
+    es: {
+      subscription: 'Suscripción',
+      manageSubscription: 'Gestionar Suscripción',
+      manageSubscriptionDesc: 'Actualizar método de pago o cambiar plan',
+      cancelSubscription: 'Cancelar Suscripción',
+      cancelSubscriptionDesc: 'Cancela tu suscripción de SteadySteps',
+      privacy: 'Privacidad',
+      downloadData: 'Descargar Mis Datos',
+      downloadDataDesc: 'Obtén una copia de tus datos de SteadySteps',
+      deleteAccountDesc: 'Eliminar permanentemente tu cuenta y todos tus datos',
+      dangerZone: 'Zona de Peligro',
+      resetDesc: 'Reinicia todo tu progreso y comienza de nuevo. Esta acción no se puede deshacer.',
+      resetButton: 'Reiniciar Todo el Progreso',
+      resetConfirmTitle: '¿Estás completamente segura?',
+      resetConfirmDesc: 'Esto eliminará permanentemente todo tu progreso, insignias y configuración. Tendrás que completar el onboarding de nuevo.',
+      resetConfirmButton: 'Sí, reiniciar todo',
+    },
+  };
+
+  const localT = texts[language];
 
   // Delete Account Flow
   if (showDeleteFlow) {
@@ -195,17 +263,55 @@ export const SettingsPage = () => {
           <h2 className="font-heading font-semibold mb-4">{t('settings.editProfile')}</h2>
           <div className="space-y-4">
             <div>
-              <Label className="text-muted-foreground">Name</Label>
+              <Label className="text-muted-foreground">{language === 'en' ? 'Name' : 'Nombre'}</Label>
               <p className="font-medium">{profile.firstName}</p>
             </div>
             <div>
-              <Label className="text-muted-foreground">Current Activity Goal</Label>
-              <p className="font-medium">{profile.currentActivityGoalMinutes} minutes daily</p>
+              <Label className="text-muted-foreground">{language === 'en' ? 'Current Activity Goal' : 'Meta de Actividad Actual'}</Label>
+              <p className="font-medium">{profile.currentActivityGoalMinutes} {language === 'en' ? 'minutes daily' : 'minutos diarios'}</p>
             </div>
             <div>
               <Label className="text-muted-foreground">{t('dashboard.stage')}</Label>
               <p className="font-medium capitalize">{profile.currentStage}</p>
             </div>
+          </div>
+        </motion.section>
+
+        {/* Subscription */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="p-6 rounded-2xl border-2 border-border bg-card"
+        >
+          <h2 className="font-heading font-semibold mb-4 flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            {localT.subscription}
+          </h2>
+          
+          <div className="space-y-2">
+            <button 
+              onClick={() => navigate('/subscription')}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
+            >
+              <CreditCard className="w-5 h-5 text-muted-foreground" />
+              <div className="text-left flex-1">
+                <p className="font-medium">{localT.manageSubscription}</p>
+                <p className="text-sm text-muted-foreground">{localT.manageSubscriptionDesc}</p>
+              </div>
+            </button>
+            
+            <button 
+              onClick={handleCancelSubscription}
+              disabled={isCancelling}
+              className="w-full p-4 rounded-xl border border-destructive/30 bg-background flex items-center gap-4 hover:border-destructive/50 transition-colors disabled:opacity-50"
+            >
+              <XCircle className="w-5 h-5 text-destructive" />
+              <div className="text-left flex-1">
+                <p className="font-medium text-destructive">{localT.cancelSubscription}</p>
+                <p className="text-sm text-muted-foreground">{localT.cancelSubscriptionDesc}</p>
+              </div>
+            </button>
           </div>
         </motion.section>
 
@@ -270,15 +376,15 @@ export const SettingsPage = () => {
         >
           <h2 className="font-heading font-semibold mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            Privacy
+            {localT.privacy}
           </h2>
           
           <div className="space-y-2">
             <button className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors">
               <Download className="w-5 h-5 text-muted-foreground" />
               <div className="text-left flex-1">
-                <p className="font-medium">Download My Data</p>
-                <p className="text-sm text-muted-foreground">Get a copy of your SteadySteps data</p>
+                <p className="font-medium">{localT.downloadData}</p>
+                <p className="text-sm text-muted-foreground">{localT.downloadDataDesc}</p>
               </div>
             </button>
             
@@ -289,7 +395,7 @@ export const SettingsPage = () => {
               <Trash2 className="w-5 h-5 text-destructive" />
               <div className="text-left flex-1">
                 <p className="font-medium text-destructive">{t('deleteAccount.title').replace('?', '')}</p>
-                <p className="text-sm text-muted-foreground">Permanently delete your account and all data</p>
+                <p className="text-sm text-muted-foreground">{localT.deleteAccountDesc}</p>
               </div>
             </button>
           </div>
@@ -304,32 +410,31 @@ export const SettingsPage = () => {
         >
           <h2 className="font-heading font-semibold mb-4 flex items-center gap-2 text-destructive">
             <AlertTriangle className="w-5 h-5" />
-            Danger Zone
+            {localT.dangerZone}
           </h2>
           
           <p className="text-sm text-muted-foreground mb-4">
-            Reset all your progress and start fresh. This action cannot be undone.
+            {localT.resetDesc}
           </p>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="w-full">
                 <Trash2 className="w-4 h-4 mr-2" />
-                Reset All Progress
+                {localT.resetButton}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogTitle>{localT.resetConfirmTitle}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete all your progress, badges, and settings. 
-                  You will need to complete onboarding again.
+                  {localT.resetConfirmDesc}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Yes, reset everything
+                  {localT.resetConfirmButton}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
