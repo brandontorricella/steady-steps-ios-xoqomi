@@ -20,8 +20,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
     
-    const { priceId, isAnnual, isNativeApp } = await req.json();
-    logStep("Received request", { priceId, isAnnual, isNativeApp });
+    const { priceId, isAnnual } = await req.json();
+    logStep("Received request", { priceId, isAnnual });
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -54,14 +54,8 @@ serve(async (req) => {
     // After trial, Stripe automatically charges the payment method
     const origin = req.headers.get("origin") || "https://steadysteps.app";
     
-    // For native iOS apps, use deep link scheme for return URLs
-    // This allows the app to be reopened directly from Safari
-    const successUrl = isNativeApp 
-      ? 'steadysteps://profile-setup?payment=success'
-      : `${origin}/profile-setup?payment=success`;
-    const cancelUrl = isNativeApp 
-      ? 'steadysteps://profile-setup?payment=cancel'
-      : `${origin}/profile-setup?payment=cancel`;
+    const successUrl = `${origin}/profile-setup?payment=success`;
+    const cancelUrl = `${origin}/profile-setup?payment=cancel`;
     
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer_email: userEmail || undefined,
