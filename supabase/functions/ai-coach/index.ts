@@ -60,22 +60,62 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      logStep("No authorization header provided");
+      return new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !userData.user) {
+      logStep("Authentication failed", { error: userError?.message });
+      return new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const user = userData.user;
+    logStep("User authenticated", { userId: user.id });
+
+    // Fetch user profile server-side instead of trusting client-provided context
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('first_name, current_stage, current_streak, current_activity_goal_minutes, primary_goal, primary_nutrition_challenge')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      logStep("Profile fetch error", { error: profileError.message });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { messages, userContext } = await req.json();
-    logStep("Received request", { messageCount: messages?.length, hasContext: !!userContext });
+    const { messages } = await req.json();
+    logStep("Received request", { messageCount: messages?.length });
 
-    // Build context-aware system prompt
+    // Build context-aware system prompt using server-fetched profile data
     let contextPrompt = COACH_SYSTEM_PROMPT;
-    if (userContext) {
+    if (profile) {
       contextPrompt += `\n\nUser Context:
-- Name: ${userContext.firstName || 'there'}
-- Current Stage: ${userContext.currentStage || 'beginner'}
-- Current Streak: ${userContext.currentStreak || 0} days
-- Activity Goal: ${userContext.currentActivityGoalMinutes || 5} minutes daily
-- Primary Goal: ${userContext.primaryGoal || 'building habits'}
-- Nutrition Challenge: ${userContext.primaryNutritionChallenge || 'general wellness'}`;
+- Name: ${profile.first_name || 'there'}
+- Current Stage: ${profile.current_stage || 'beginner'}
+- Current Streak: ${profile.current_streak || 0} days
+- Activity Goal: ${profile.current_activity_goal_minutes || 5} minutes daily
+- Primary Goal: ${profile.primary_goal || 'building habits'}
+- Nutrition Challenge: ${profile.primary_nutrition_challenge || 'general wellness'}`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
