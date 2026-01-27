@@ -5,16 +5,24 @@ import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
 import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
 import { getUserProfile, getTodayCheckin, getWeeklyStats } from '@/lib/storage';
-import { Flame, Trophy, Check } from 'lucide-react';
+import { Flame, Trophy, Check, Settings2 } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
 import { DailyTipCard } from './DailyTipCard';
 import { CoachTipCard } from './CoachTipCard';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
+import { MicroLessons, MicroLessonCard } from '@/components/education/MicroLessons';
+import { FlexibleProgress } from '@/components/habits/FlexibleProgress';
+import { QuickHabitLog } from '@/components/habits/QuickHabitLog';
+import { CommunityNudge } from '@/components/feedback/CommunityNudge';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export const Dashboard = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showCheckin, setShowCheckin] = useState(false);
   const [todayCompleted, setTodayCompleted] = useState(false);
+  const [showMicroLessons, setShowMicroLessons] = useState(false);
+  const [showFlexibleProgress, setShowFlexibleProgress] = useState(false);
+  const { language } = useLanguage();
 
   useEffect(() => {
     const userProfile = getUserProfile();
@@ -42,10 +50,45 @@ export const Dashboard = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return language === 'en' ? 'Good morning' : 'Buenos días';
+    if (hour < 17) return language === 'en' ? 'Good afternoon' : 'Buenas tardes';
+    return language === 'en' ? 'Good evening' : 'Buenas noches';
   };
+
+  const texts = {
+    en: {
+      currentStreak: 'Current Streak',
+      longest: 'Longest',
+      days: 'days',
+      checkIn: "Complete Today's Check-in",
+      checkInComplete: "Today's check-in complete!",
+      checkInDesc: 'Great job showing up today',
+      thisWeek: 'This Week',
+      activities: 'activities',
+      nutritionHabits: 'nutrition habits',
+      level: 'Level',
+      points: 'points',
+      stage: 'Stage',
+      adjustGoals: 'Adjust Goals',
+    },
+    es: {
+      currentStreak: 'Racha Actual',
+      longest: 'Más larga',
+      days: 'días',
+      checkIn: 'Completa Tu Registro de Hoy',
+      checkInComplete: '¡Registro de hoy completado!',
+      checkInDesc: 'Excelente trabajo al presentarte hoy',
+      thisWeek: 'Esta Semana',
+      activities: 'actividades',
+      nutritionHabits: 'hábitos de nutrición',
+      level: 'Nivel',
+      points: 'puntos',
+      stage: 'Etapa',
+      adjustGoals: 'Ajustar Metas',
+    },
+  };
+
+  const t = texts[language];
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -56,7 +99,7 @@ export const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="px-6 space-y-6">
+      <main className="px-6 space-y-6 mt-6">
         {/* Streak Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -69,17 +112,22 @@ export const Dashboard = () => {
                 <Flame className="w-7 h-7" />
               </div>
               <div>
-                <p className="text-sm opacity-80">Current Streak</p>
+                <p className="text-sm opacity-80">{t.currentStreak}</p>
                 <p className="text-4xl font-bold">{profile.currentStreak}</p>
-                <p className="text-sm opacity-80">days</p>
+                <p className="text-sm opacity-80">{t.days}</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm opacity-80">Longest</p>
-              <p className="text-xl font-semibold">{profile.longestStreak} days</p>
+              <p className="text-sm opacity-80">{t.longest}</p>
+              <p className="text-xl font-semibold">{profile.longestStreak} {t.days}</p>
             </div>
           </div>
         </motion.div>
+
+        {/* Community Nudge - shown before check-in */}
+        {!todayCompleted && (
+          <CommunityNudge habitType="checkin" isVisible={true} />
+        )}
 
         {/* Daily Check-in Button */}
         {!todayCompleted ? (
@@ -94,7 +142,7 @@ export const Dashboard = () => {
               className="w-full py-8 text-lg font-semibold rounded-2xl animate-pulse-soft"
             >
               <Check className="w-6 h-6 mr-2" />
-              Complete Today's Check-in
+              {t.checkIn}
             </Button>
           </motion.div>
         ) : (
@@ -109,12 +157,21 @@ export const Dashboard = () => {
                 <Check className="w-6 h-6 text-success" />
               </div>
               <div>
-                <p className="font-semibold text-success">Today's check-in complete!</p>
-                <p className="text-sm text-muted-foreground">Great job showing up today</p>
+                <p className="font-semibold text-success">{t.checkInComplete}</p>
+                <p className="text-sm text-muted-foreground">{t.checkInDesc}</p>
               </div>
             </div>
           </motion.div>
         )}
+
+        {/* Quick Habit Log */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <QuickHabitLog />
+        </motion.div>
 
         {/* Weekly Progress */}
         <motion.div
@@ -124,8 +181,8 @@ export const Dashboard = () => {
           className="p-6 rounded-2xl border-2 border-border bg-card"
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-heading font-semibold">This Week</h3>
-            <span className="text-sm text-muted-foreground">{weeklyStats.checkins}/7 days</span>
+            <h3 className="font-heading font-semibold">{t.thisWeek}</h3>
+            <span className="text-sm text-muted-foreground">{weeklyStats.checkins}/7 {t.days}</span>
           </div>
           <div className="h-3 rounded-full bg-secondary overflow-hidden">
             <motion.div 
@@ -136,12 +193,12 @@ export const Dashboard = () => {
             />
           </div>
           <div className="flex justify-between mt-4 text-sm text-muted-foreground">
-            <span>{weeklyStats.activityCompletions} activities</span>
-            <span>{weeklyStats.nutritionScore} nutrition habits</span>
+            <span>{weeklyStats.activityCompletions} {t.activities}</span>
+            <span>{weeklyStats.nutritionScore} {t.nutritionHabits}</span>
           </div>
         </motion.div>
 
-        {/* Level & Stage */}
+        {/* Level & Stage with Adjust Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -155,19 +212,33 @@ export const Dashboard = () => {
               </div>
             </ProgressRing>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground">Level</p>
+              <p className="text-sm text-muted-foreground">{t.level}</p>
               <p className="font-heading font-bold text-lg">{currentLevel.name}</p>
-              <p className="text-sm text-muted-foreground mt-1">{profile.totalPoints} points</p>
+              <p className="text-sm text-muted-foreground mt-1">{profile.totalPoints} {t.points}</p>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium capitalize">{profile.currentStage} Stage</span>
+          <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium capitalize">{profile.currentStage} {t.stage}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">{getStageDescription(profile.currentStage)}</p>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">{getStageDescription(profile.currentStage)}</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFlexibleProgress(true)}
+              className="text-primary"
+            >
+              <Settings2 className="w-4 h-4 mr-1" />
+              {t.adjustGoals}
+            </Button>
           </div>
         </motion.div>
+
+        {/* Micro Lesson Card */}
+        <MicroLessonCard onOpen={() => setShowMicroLessons(true)} />
 
         {/* Coach Tip Card */}
         <CoachTipCard />
@@ -177,6 +248,17 @@ export const Dashboard = () => {
       </main>
 
       <BottomNavigation />
+
+      {/* Micro Lessons Modal */}
+      <MicroLessons isOpen={showMicroLessons} onClose={() => setShowMicroLessons(false)} />
+
+      {/* Flexible Progress Modal */}
+      <FlexibleProgress
+        isOpen={showFlexibleProgress}
+        onClose={() => setShowFlexibleProgress(false)}
+        profile={profile}
+        onProfileUpdate={setProfile}
+      />
     </div>
   );
 };

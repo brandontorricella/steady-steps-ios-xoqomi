@@ -1,18 +1,21 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, Activity, Utensils, Smile, Flame, Target } from 'lucide-react';
+import { ArrowLeft, Check, Activity, Utensils, Smile, Flame, Target, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
 import { getUserProfile, getWeeklyStats, getDailyCheckins } from '@/lib/storage';
-import { getMoodEmoji } from '@/lib/types';
+import { getMoodEmoji, Mood } from '@/lib/types';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
+import { Confetti } from '@/components/ui/confetti';
+import { useState, useEffect } from 'react';
 
 export const WeeklySummaryPage = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { language } = useLanguage();
   const profile = getUserProfile();
   const weeklyStats = getWeeklyStats();
   const checkins = getDailyCheckins();
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // Calculate mood data
   const weekCheckins = checkins.slice(-7);
@@ -24,36 +27,140 @@ export const WeeklySummaryPage = () => {
   });
   const mostCommonMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'good';
 
-  const getShowingUpMessage = (days: number) => {
-    if (days === 7) return 'You showed up every single day this week. That is incredible.';
-    if (days >= 5) return `You checked in ${days} days this week. That is real commitment.`;
-    if (days >= 3) return `You made it ${days} days. Every day counts.`;
-    if (days >= 1) return `You checked in this week. That is a start to build on.`;
-    return 'This week was tough. But you are here now, and that matters.';
-  };
-
-  const getActivityMessage = (rate: number) => {
-    if (rate >= 80) return 'Your movement game was strong this week.';
-    if (rate >= 50) return 'You got moving this week. Every bit matters.';
-    return 'Movement was tough this week. Next week is a fresh start.';
-  };
+  // Show confetti for great weeks
+  useEffect(() => {
+    if (weeklyStats.checkins >= 5) {
+      setTimeout(() => setShowConfetti(true), 500);
+    }
+  }, [weeklyStats.checkins]);
 
   const activityRate = weeklyStats.checkins > 0 
     ? (weeklyStats.activityCompletions / weeklyStats.checkins) * 100 
     : 0;
 
+  const texts = {
+    en: {
+      title: 'Your Week in Review',
+      subtitle: 'Here is how you showed up for yourself',
+      showingUp: 'Showing Up',
+      movement: 'Movement',
+      nutritionHabits: 'Nutrition Habits',
+      howYouFelt: 'How You Felt',
+      streak: 'Streak',
+      lookAhead: 'This Week',
+      gotIt: 'Got It',
+      days: 'days',
+      daysChecked: 'days checked in',
+      nutritionCompleted: 'nutrition habits completed',
+      mostlyFelt: 'You mostly felt',
+      thisWeek: 'this week',
+      showingUpMessages: {
+        perfect: 'You showed up every single day this week. That is incredible! 🌟',
+        great: `You checked in ${weeklyStats.checkins} days this week. That is real commitment!`,
+        good: `You made it ${weeklyStats.checkins} days. Every day counts.`,
+        start: `You checked in this week. That is a start to build on.`,
+        fresh: 'This week was tough. But you are here now, and that matters.',
+      },
+      activityMessages: {
+        strong: 'Your movement game was strong this week! 💪',
+        solid: 'You got moving this week. Every bit matters.',
+        fresh: 'Movement was tough this week. Next week is a fresh start.',
+      },
+      nutritionMessage: `You completed ${weeklyStats.nutritionScore} nutrition habits. Mindful choices add up!`,
+      streakMessages: {
+        counting: `${profile?.currentStreak || 0} days and counting. You are building something real.`,
+        fresh: 'Fresh start this week. You are back.',
+      },
+      lookAheadMessage: 'Try to get one extra day of movement this week.',
+      celebration: 'Amazing week! Keep it up! 🎉',
+    },
+    es: {
+      title: 'Tu Semana en Resumen',
+      subtitle: 'Así te presentaste para ti misma',
+      showingUp: 'Presentándote',
+      movement: 'Movimiento',
+      nutritionHabits: 'Hábitos de Nutrición',
+      howYouFelt: 'Cómo Te Sentiste',
+      streak: 'Racha',
+      lookAhead: 'Esta Semana',
+      gotIt: 'Entendido',
+      days: 'días',
+      daysChecked: 'días registrados',
+      nutritionCompleted: 'hábitos de nutrición completados',
+      mostlyFelt: 'Mayormente te sentiste',
+      thisWeek: 'esta semana',
+      showingUpMessages: {
+        perfect: '¡Te presentaste todos los días esta semana. Eso es increíble! 🌟',
+        great: `Te registraste ${weeklyStats.checkins} días esta semana. ¡Eso es compromiso real!`,
+        good: `Lograste ${weeklyStats.checkins} días. Cada día cuenta.`,
+        start: `Te registraste esta semana. Es un comienzo para construir.`,
+        fresh: 'Esta semana fue difícil. Pero estás aquí ahora, y eso importa.',
+      },
+      activityMessages: {
+        strong: '¡Tu movimiento fue fuerte esta semana! 💪',
+        solid: 'Te moviste esta semana. Cada momento cuenta.',
+        fresh: 'El movimiento fue difícil esta semana. La próxima es un nuevo comienzo.',
+      },
+      nutritionMessage: `Completaste ${weeklyStats.nutritionScore} hábitos de nutrición. ¡Las elecciones conscientes suman!`,
+      streakMessages: {
+        counting: `${profile?.currentStreak || 0} días y contando. Estás construyendo algo real.`,
+        fresh: 'Nuevo comienzo esta semana. Estás de vuelta.',
+      },
+      lookAheadMessage: 'Intenta conseguir un día extra de movimiento esta semana.',
+      celebration: '¡Semana increíble! ¡Sigue así! 🎉',
+    },
+  };
+
+  const t = texts[language];
+
+  const moodLabels = {
+    en: { great: 'great', good: 'good', okay: 'okay', stressed: 'stressed', tired: 'tired' },
+    es: { great: 'muy bien', good: 'bien', okay: 'regular', stressed: 'estresada', tired: 'cansada' },
+  };
+
+  const getShowingUpMessage = () => {
+    if (weeklyStats.checkins === 7) return t.showingUpMessages.perfect;
+    if (weeklyStats.checkins >= 5) return t.showingUpMessages.great;
+    if (weeklyStats.checkins >= 3) return t.showingUpMessages.good;
+    if (weeklyStats.checkins >= 1) return t.showingUpMessages.start;
+    return t.showingUpMessages.fresh;
+  };
+
+  const getActivityMessage = () => {
+    if (activityRate >= 80) return t.activityMessages.strong;
+    if (activityRate >= 50) return t.activityMessages.solid;
+    return t.activityMessages.fresh;
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
+      <Confetti isActive={showConfetti} />
+      
       <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-muted-foreground mb-4 min-h-[44px] min-w-[44px]">
           <ArrowLeft className="w-5 h-5" />
-          <span>{t('common.back')}</span>
+          <span>{language === 'en' ? 'Back' : 'Atrás'}</span>
         </button>
-        <h1 className="text-3xl font-heading font-bold">{t('weeklySummary.title')}</h1>
-        <p className="text-muted-foreground mt-1">{t('weeklySummary.subtitle')}</p>
+        <h1 className="text-3xl font-heading font-bold">{t.title}</h1>
+        <p className="text-muted-foreground mt-1">{t.subtitle}</p>
       </header>
 
       <main className="px-6 py-6 space-y-4">
+        {/* Celebration banner for great weeks */}
+        {weeklyStats.checkins >= 5 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-4 rounded-2xl gradient-gold text-center"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Sparkles className="w-5 h-5 text-gold-foreground" />
+              <span className="font-heading font-bold text-gold-foreground">{t.celebration}</span>
+              <Sparkles className="w-5 h-5 text-gold-foreground" />
+            </div>
+          </motion.div>
+        )}
+
         {/* Showing Up */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -62,9 +169,12 @@ export const WeeklySummaryPage = () => {
         >
           <div className="flex items-center gap-3 mb-2">
             <Check className="w-5 h-5 text-accent-foreground" />
-            <h3 className="font-heading font-semibold text-accent-foreground">{t('weeklySummary.showingUp')}</h3>
+            <h3 className="font-heading font-semibold text-accent-foreground">{t.showingUp}</h3>
           </div>
-          <p className="text-foreground">{getShowingUpMessage(weeklyStats.checkins)}</p>
+          <p className="text-foreground">{getShowingUpMessage()}</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {weeklyStats.checkins}/7 {t.daysChecked}
+          </p>
         </motion.div>
 
         {/* Movement */}
@@ -76,9 +186,12 @@ export const WeeklySummaryPage = () => {
         >
           <div className="flex items-center gap-3 mb-2">
             <Activity className="w-5 h-5 text-primary" />
-            <h3 className="font-heading font-semibold">{t('weeklySummary.movement')}</h3>
+            <h3 className="font-heading font-semibold">{t.movement}</h3>
           </div>
-          <p className="text-foreground">{getActivityMessage(activityRate)}</p>
+          <p className="text-foreground">{getActivityMessage()}</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {weeklyStats.activityCompletions}/{weeklyStats.checkins} {language === 'en' ? 'days with activity' : 'días con actividad'}
+          </p>
         </motion.div>
 
         {/* Nutrition */}
@@ -90,11 +203,9 @@ export const WeeklySummaryPage = () => {
         >
           <div className="flex items-center gap-3 mb-2">
             <Utensils className="w-5 h-5 text-success" />
-            <h3 className="font-heading font-semibold">{t('weeklySummary.nutritionHabits')}</h3>
+            <h3 className="font-heading font-semibold">{t.nutritionHabits}</h3>
           </div>
-          <p className="text-foreground">
-            You completed {weeklyStats.nutritionScore} nutrition habits this week. You made mindful choices.
-          </p>
+          <p className="text-foreground">{t.nutritionMessage}</p>
         </motion.div>
 
         {/* Mood */}
@@ -106,10 +217,10 @@ export const WeeklySummaryPage = () => {
         >
           <div className="flex items-center gap-3 mb-2">
             <Smile className="w-5 h-5 text-dusty-rose-foreground" />
-            <h3 className="font-heading font-semibold">{t('weeklySummary.howYouFelt')}</h3>
+            <h3 className="font-heading font-semibold">{t.howYouFelt}</h3>
           </div>
           <p className="text-foreground">
-            You mostly felt {getMoodEmoji(mostCommonMood as any)} {mostCommonMood} this week.
+            {t.mostlyFelt} {getMoodEmoji(mostCommonMood as Mood)} {moodLabels[language][mostCommonMood as Mood] || mostCommonMood} {t.thisWeek}.
           </p>
         </motion.div>
 
@@ -122,12 +233,12 @@ export const WeeklySummaryPage = () => {
         >
           <div className="flex items-center gap-3 mb-2">
             <Flame className="w-5 h-5 text-gold-foreground" />
-            <h3 className="font-heading font-semibold text-gold-foreground">{profile?.currentStreak || 0} {t('dashboard.days')}</h3>
+            <h3 className="font-heading font-semibold text-gold-foreground">{profile?.currentStreak || 0} {t.days}</h3>
           </div>
           <p className="text-foreground">
             {(profile?.currentStreak || 0) > 0 
-              ? `${profile?.currentStreak} days and counting. You are building something real.`
-              : 'Fresh start this week. You are back.'
+              ? t.streakMessages.counting
+              : t.streakMessages.fresh
             }
           </p>
         </motion.div>
@@ -141,10 +252,10 @@ export const WeeklySummaryPage = () => {
         >
           <div className="flex items-center gap-3 mb-2">
             <Target className="w-5 h-5 text-primary-foreground" />
-            <h3 className="font-heading font-semibold text-primary-foreground">{t('weeklySummary.thisWeek')}</h3>
+            <h3 className="font-heading font-semibold text-primary-foreground">{t.lookAhead}</h3>
           </div>
           <p className="text-primary-foreground">
-            Try to get one extra day of movement this week.
+            {t.lookAheadMessage}
           </p>
         </motion.div>
 
@@ -155,7 +266,7 @@ export const WeeklySummaryPage = () => {
           className="pt-4"
         >
           <Button size="lg" className="w-full py-6" onClick={() => navigate('/')}>
-            {t('weeklySummary.gotIt')}
+            {t.gotIt}
           </Button>
         </motion.div>
       </main>

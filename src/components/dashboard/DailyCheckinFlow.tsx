@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { UserProfile, getNutritionQuestion, SECONDARY_NUTRITION_QUESTIONS } from '@/lib/types';
+import { UserProfile, getNutritionQuestion, SECONDARY_NUTRITION_QUESTIONS, Mood } from '@/lib/types';
 import { saveDailyCheckin, saveUserProfile, calculatePoints, earnBadge } from '@/lib/storage';
 import { Check, X, Sparkles, PartyPopper } from 'lucide-react';
+import { Confetti } from '@/components/ui/confetti';
+import { MicroFeedback, InlineFeedback } from '@/components/feedback/MicroFeedback';
+import { CommunityNudge } from '@/components/feedback/CommunityNudge';
+import { MoodCheckIn } from './MoodCheckIn';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface DailyCheckinFlowProps {
   profile: UserProfile;
@@ -11,13 +16,17 @@ interface DailyCheckinFlowProps {
 }
 
 export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps) => {
-  const [step, setStep] = useState<'activity' | 'nutrition' | 'summary'>('activity');
+  const [step, setStep] = useState<'activity' | 'nutrition' | 'mood' | 'summary'>('activity');
   const [activityCompleted, setActivityCompleted] = useState<boolean | null>(null);
   const [nutritionResponses, setNutritionResponses] = useState<(boolean | null)[]>(
     Array(profile.nutritionQuestionsCount).fill(null)
   );
+  const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [newBadges, setNewBadges] = useState<string[]>([]);
+  const [showActivityFeedback, setShowActivityFeedback] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { language } = useLanguage();
 
   const nutritionQuestions = [
     getNutritionQuestion(profile.primaryNutritionChallenge),
@@ -26,6 +35,10 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
 
   const handleActivityResponse = (completed: boolean) => {
     setActivityCompleted(completed);
+    if (completed) {
+      setShowActivityFeedback(true);
+      setTimeout(() => setShowActivityFeedback(false), 2000);
+    }
     setStep('nutrition');
   };
 
@@ -35,10 +48,23 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
     setNutritionResponses(newResponses);
   };
 
-  const handleSubmit = () => {
+  const handleMoodSelected = (mood: Mood) => {
+    setSelectedMood(mood);
+    handleSubmit(mood);
+  };
+
+  const handleSkipMood = () => {
+    handleSubmit(null);
+  };
+
+  const handleSubmit = (mood: Mood | null) => {
     const today = new Date().toISOString().split('T')[0];
     const newStreak = profile.currentStreak + 1;
     const points = calculatePoints(activityCompleted || false, nutritionResponses, newStreak);
+    
+    // Check for perfect day
+    const allNutritionYes = nutritionResponses.every(r => r === true);
+    const isPerfectDay = activityCompleted && allNutritionYes;
     
     // Save check-in
     saveDailyCheckin({
@@ -46,6 +72,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
       checkinCompleted: true,
       activityCompleted: activityCompleted || false,
       nutritionResponses,
+      mood: mood as any,
       pointsEarned: points,
     });
 
@@ -58,6 +85,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
       totalCheckins: profile.totalCheckins + 1,
       totalActivityCompletions: profile.totalActivityCompletions + (activityCompleted ? 1 : 0),
       totalNutritionHabitsCompleted: profile.totalNutritionHabitsCompleted + nutritionResponses.filter(r => r === true).length,
+      totalPerfectDays: profile.totalPerfectDays + (isPerfectDay ? 1 : 0),
       lastCheckinDate: today,
     };
     saveUserProfile(updatedProfile);
@@ -66,30 +94,97 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
     const badges: string[] = [];
     if (profile.totalCheckins === 0) {
       earnBadge('first_checkin');
-      badges.push('First Check-In');
+      badges.push(language === 'en' ? 'First Check-In' : 'Primer Registro');
     }
     if (activityCompleted && profile.totalActivityCompletions === 0) {
       earnBadge('first_activity');
-      badges.push('First Steps');
+      badges.push(language === 'en' ? 'First Steps' : 'Primeros Pasos');
     }
     if (nutritionResponses.some(r => r === true) && profile.totalNutritionHabitsCompleted === 0) {
       earnBadge('mindful_start');
-      badges.push('Mindful Start');
+      badges.push(language === 'en' ? 'Mindful Start' : 'Inicio Consciente');
     }
     if (newStreak === 7) {
       earnBadge('one_week');
-      badges.push('One Week Wonder');
+      badges.push(language === 'en' ? 'One Week Wonder' : 'Maravilla de Una Semana');
+    }
+    if (isPerfectDay && profile.totalPerfectDays === 0) {
+      earnBadge('perfect_start');
+      badges.push(language === 'en' ? 'Perfect Start' : 'Comienzo Perfecto');
+    }
+    if (mood) {
+      earnBadge('mood_starter');
     }
 
     setEarnedPoints(points);
     setNewBadges(badges);
+    
+    // Show confetti for milestones
+    if (badges.length > 0 || isPerfectDay || newStreak % 7 === 0) {
+      setShowConfetti(true);
+    }
+    
     setStep('summary');
   };
 
   const allNutritionAnswered = nutritionResponses.every(r => r !== null);
 
+  const texts = {
+    en: {
+      activityTitle: 'Did you complete your movement goal today?',
+      activityGoal: 'minutes of walking, stretching, or gentle movement',
+      yesDidIt: 'Yes, I Did It!',
+      skippedToday: 'I Skipped Today',
+      nutritionTitle: 'Quick nutrition check',
+      nutritionSubtitle: 'Just answer honestly. No judgment here.',
+      noGuilt: 'No guilt. Tomorrow is a fresh start.',
+      greatJob: 'Great job completing your activity!',
+      submit: 'Submit My Day',
+      celebration: 'Great job checking in',
+      activity: 'Activity',
+      completed: 'Completed',
+      skipped: 'Skipped',
+      nutritionHabits: 'Nutrition habits',
+      of: 'of',
+      pointsEarned: 'Points earned',
+      newBadges: 'New badge earned!',
+      perfectDay: 'Perfect day!',
+      done: 'Done for Today',
+      yes: 'Yes',
+      no: 'No',
+    },
+    es: {
+      activityTitle: '¿Completaste tu meta de movimiento hoy?',
+      activityGoal: 'minutos de caminata, estiramiento o movimiento suave',
+      yesDidIt: '¡Sí, Lo Hice!',
+      skippedToday: 'Lo Salté Hoy',
+      nutritionTitle: 'Revisión rápida de nutrición',
+      nutritionSubtitle: 'Solo responde honestamente. Sin juicios aquí.',
+      noGuilt: 'Sin culpa. Mañana es un nuevo comienzo.',
+      greatJob: '¡Excelente trabajo completando tu actividad!',
+      submit: 'Enviar Mi Día',
+      celebration: 'Excelente trabajo al registrarte',
+      activity: 'Actividad',
+      completed: 'Completada',
+      skipped: 'Saltada',
+      nutritionHabits: 'Hábitos de nutrición',
+      of: 'de',
+      pointsEarned: 'Puntos ganados',
+      newBadges: '¡Nueva insignia ganada!',
+      perfectDay: '¡Día perfecto!',
+      done: 'Listo por Hoy',
+      yes: 'Sí',
+      no: 'No',
+    },
+  };
+
+  const t = texts[language];
+
   return (
     <div className="min-h-screen gradient-soft flex flex-col">
+      <Confetti isActive={showConfetti} />
+      <MicroFeedback type="activity" isVisible={showActivityFeedback} />
+      
       <AnimatePresence mode="wait">
         {step === 'activity' && (
           <motion.div
@@ -100,11 +195,16 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
             className="flex-1 flex flex-col items-center justify-center px-6 py-12"
           >
             <h1 className="text-3xl font-heading font-bold mb-4 text-center">
-              Did you complete your movement goal today?
+              {t.activityTitle}
             </h1>
-            <p className="text-muted-foreground text-center max-w-sm mb-12">
-              Your goal was <span className="font-semibold text-foreground">{profile.currentActivityGoalMinutes} minutes</span> of walking, stretching, or gentle movement
+            <p className="text-muted-foreground text-center max-w-sm mb-8">
+              {language === 'en' ? 'Your goal was' : 'Tu meta fue'} <span className="font-semibold text-foreground">{profile.currentActivityGoalMinutes} {language === 'en' ? 'minutes' : 'minutos'}</span> {t.activityGoal}
             </p>
+
+            {/* Community nudge */}
+            <div className="w-full max-w-sm mb-8">
+              <CommunityNudge habitType="activity" isVisible={true} />
+            </div>
 
             <div className="flex gap-4 w-full max-w-sm">
               <Button
@@ -113,7 +213,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
                 className="flex-1 py-8 text-lg font-semibold rounded-xl bg-success hover:bg-success/90"
               >
                 <Check className="w-6 h-6 mr-2" />
-                Yes, I Did It
+                {t.yesDidIt}
               </Button>
               <Button
                 size="lg"
@@ -122,7 +222,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
                 className="flex-1 py-8 text-lg font-semibold rounded-xl"
               >
                 <X className="w-6 h-6 mr-2" />
-                I Skipped Today
+                {t.skippedToday}
               </Button>
             </div>
           </motion.div>
@@ -136,26 +236,18 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
             exit={{ opacity: 0, x: -20 }}
             className="flex-1 flex flex-col px-6 py-12"
           >
-            {activityCompleted ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-4 rounded-xl bg-success/10 border border-success/30 mb-6 text-center"
-              >
-                <p className="text-success font-medium">🎉 Great job completing your activity!</p>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-4 rounded-xl bg-secondary mb-6 text-center"
-              >
-                <p className="text-muted-foreground">No guilt. Tomorrow is a fresh start.</p>
-              </motion.div>
-            )}
+            <InlineFeedback 
+              message={activityCompleted ? `🎉 ${t.greatJob}` : t.noGuilt} 
+              isVisible={true} 
+            />
 
-            <h1 className="text-2xl font-heading font-bold mb-2">Quick nutrition check</h1>
-            <p className="text-muted-foreground mb-8">Just answer honestly. No judgment here.</p>
+            <h1 className="text-2xl font-heading font-bold mb-2">{t.nutritionTitle}</h1>
+            <p className="text-muted-foreground mb-6">{t.nutritionSubtitle}</p>
+
+            {/* Community nudge for nutrition */}
+            <div className="mb-6">
+              <CommunityNudge habitType="nutrition" isVisible={true} />
+            </div>
 
             <div className="space-y-4 flex-1">
               {nutritionQuestions.map((question, index) => (
@@ -176,7 +268,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
                           : 'bg-secondary hover:bg-secondary/80'
                       }`}
                     >
-                      Yes
+                      {t.yes}
                     </button>
                     <button
                       onClick={() => handleNutritionResponse(index, false)}
@@ -186,7 +278,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
                           : 'bg-secondary hover:bg-secondary/80'
                       }`}
                     >
-                      No
+                      {t.no}
                     </button>
                   </div>
                 </motion.div>
@@ -195,12 +287,28 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
 
             <Button
               size="lg"
-              onClick={handleSubmit}
+              onClick={() => setStep('mood')}
               disabled={!allNutritionAnswered}
               className="w-full py-6 text-lg font-semibold mt-8"
             >
-              Submit My Day
+              {language === 'en' ? 'Continue' : 'Continuar'}
             </Button>
+          </motion.div>
+        )}
+
+        {step === 'mood' && (
+          <motion.div
+            key="mood"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="flex-1"
+          >
+            <MoodCheckIn 
+              selectedMood={selectedMood}
+              onMoodSelect={handleMoodSelected} 
+              onSkip={handleSkipMood}
+            />
           </motion.div>
         )}
 
@@ -221,26 +329,26 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
             </motion.div>
 
             <h1 className="text-3xl font-heading font-bold mb-4">
-              Great job checking in, {profile.firstName}!
+              {t.celebration}, {profile.firstName}!
             </h1>
 
             <div className="w-full max-w-sm space-y-4 mt-6">
               <div className="p-4 rounded-xl bg-secondary flex items-center justify-between">
-                <span>Activity</span>
+                <span>{t.activity}</span>
                 <span className={activityCompleted ? 'text-success font-semibold' : 'text-muted-foreground'}>
-                  {activityCompleted ? '✓ Completed' : 'Skipped'}
+                  {activityCompleted ? `✓ ${t.completed}` : t.skipped}
                 </span>
               </div>
 
               <div className="p-4 rounded-xl bg-secondary flex items-center justify-between">
-                <span>Nutrition habits</span>
+                <span>{t.nutritionHabits}</span>
                 <span className="font-semibold">
-                  {nutritionResponses.filter(r => r === true).length} of {nutritionResponses.length}
+                  {nutritionResponses.filter(r => r === true).length} {t.of} {nutritionResponses.length}
                 </span>
               </div>
 
               <div className="p-4 rounded-xl gradient-primary text-primary-foreground flex items-center justify-between">
-                <span>Points earned</span>
+                <span>{t.pointsEarned}</span>
                 <span className="text-2xl font-bold">+{earnedPoints}</span>
               </div>
 
@@ -253,9 +361,25 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
                 >
                   <div className="flex items-center gap-2 justify-center">
                     <Sparkles className="w-5 h-5" />
-                    <span className="font-semibold">New badge{newBadges.length > 1 ? 's' : ''} earned!</span>
+                    <span className="font-semibold">{newBadges.length > 1 ? (language === 'en' ? 'New badges earned!' : '¡Nuevas insignias ganadas!') : t.newBadges}</span>
                   </div>
                   <p className="mt-1 text-sm">{newBadges.join(', ')}</p>
+                </motion.div>
+              )}
+
+              {/* Perfect day celebration */}
+              {activityCompleted && nutritionResponses.every(r => r === true) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="p-4 rounded-xl gradient-gold text-gold-foreground"
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    <span className="text-xl">⭐</span>
+                    <span className="font-semibold">{t.perfectDay}</span>
+                    <span className="text-xl">⭐</span>
+                  </div>
                 </motion.div>
               )}
             </div>
@@ -265,7 +389,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
               onClick={onComplete}
               className="px-12 py-6 text-lg font-semibold mt-12"
             >
-              Done for Today
+              {t.done}
             </Button>
           </motion.div>
         )}
