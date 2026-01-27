@@ -6,6 +6,8 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { UserProfile } from '@/lib/types';
 import { saveUserProfile, getUserProfile } from '@/lib/storage';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfileSync } from '@/hooks/useProfileSync';
 
 interface FlexibleProgressProps {
   isOpen: boolean;
@@ -15,6 +17,8 @@ interface FlexibleProgressProps {
 }
 
 export const FlexibleProgress = ({ isOpen, onClose, profile, onProfileUpdate }: FlexibleProgressProps) => {
+  const { user } = useAuth();
+  const { syncProfileToDatabase } = useProfileSync();
   const { language } = useLanguage();
   const [isPaused, setIsPaused] = useState(profile.currentActivityGoalMinutes === 0);
 
@@ -22,7 +26,7 @@ export const FlexibleProgress = ({ isOpen, onClose, profile, onProfileUpdate }: 
   const minGoal = 5;
   const maxGoal = 90;
 
-  const handleAdjustGoal = (direction: 'up' | 'down') => {
+  const handleAdjustGoal = async (direction: 'up' | 'down') => {
     let newGoal = currentGoal;
     if (direction === 'up' && currentGoal < maxGoal) {
       newGoal = Math.min(currentGoal + 5, maxGoal);
@@ -34,6 +38,11 @@ export const FlexibleProgress = ({ isOpen, onClose, profile, onProfileUpdate }: 
     saveUserProfile(updatedProfile);
     onProfileUpdate(updatedProfile);
     
+    // Sync to database
+    if (user) {
+      await syncProfileToDatabase(updatedProfile, user.id);
+    }
+    
     toast.success(
       language === 'en' 
         ? `Goal adjusted to ${newGoal} minutes` 
@@ -41,13 +50,19 @@ export const FlexibleProgress = ({ isOpen, onClose, profile, onProfileUpdate }: 
     );
   };
 
-  const handlePauseToggle = () => {
+  const handlePauseToggle = async () => {
     if (isPaused) {
       // Resume with minimum goal
       const updatedProfile = { ...profile, currentActivityGoalMinutes: minGoal };
       saveUserProfile(updatedProfile);
       onProfileUpdate(updatedProfile);
       setIsPaused(false);
+      
+      // Sync to database
+      if (user) {
+        await syncProfileToDatabase(updatedProfile, user.id);
+      }
+      
       toast.success(
         language === 'en' 
           ? 'Welcome back! Starting fresh with 5 minutes' 
@@ -59,6 +74,12 @@ export const FlexibleProgress = ({ isOpen, onClose, profile, onProfileUpdate }: 
       saveUserProfile(updatedProfile);
       onProfileUpdate(updatedProfile);
       setIsPaused(true);
+      
+      // Sync to database
+      if (user) {
+        await syncProfileToDatabase(updatedProfile, user.id);
+      }
+      
       toast.success(
         language === 'en' 
           ? 'Activity paused. Take the time you need.' 

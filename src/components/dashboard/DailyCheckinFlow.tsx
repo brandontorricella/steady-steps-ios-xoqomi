@@ -9,6 +9,9 @@ import { MicroFeedback, InlineFeedback } from '@/components/feedback/MicroFeedba
 import { CommunityNudge } from '@/components/feedback/CommunityNudge';
 import { MoodCheckIn } from './MoodCheckIn';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfileSync } from '@/hooks/useProfileSync';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DailyCheckinFlowProps {
   profile: UserProfile;
@@ -16,6 +19,8 @@ interface DailyCheckinFlowProps {
 }
 
 export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps) => {
+  const { user } = useAuth();
+  const { syncProfileToDatabase } = useProfileSync();
   const [step, setStep] = useState<'activity' | 'nutrition' | 'mood' | 'summary'>('activity');
   const [activityCompleted, setActivityCompleted] = useState<boolean | null>(null);
   const [nutritionResponses, setNutritionResponses] = useState<(boolean | null)[]>(
@@ -57,7 +62,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
     handleSubmit(null);
   };
 
-  const handleSubmit = (mood: Mood | null) => {
+  const handleSubmit = async (mood: Mood | null) => {
     const today = new Date().toISOString().split('T')[0];
     const newStreak = profile.currentStreak + 1;
     const points = calculatePoints(activityCompleted || false, nutritionResponses, newStreak);
@@ -66,7 +71,7 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
     const allNutritionYes = nutritionResponses.every(r => r === true);
     const isPerfectDay = activityCompleted && allNutritionYes;
     
-    // Save check-in
+    // Save check-in locally
     saveDailyCheckin({
       date: today,
       checkinCompleted: true,
@@ -89,6 +94,22 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
       lastCheckinDate: today,
     };
     saveUserProfile(updatedProfile);
+    
+    // Sync to database if authenticated
+    if (user) {
+      await syncProfileToDatabase(updatedProfile, user.id);
+      
+      // Also save check-in to database
+      await supabase.from('daily_checkins').upsert({
+        user_id: user.id,
+        date: today,
+        checkin_completed: true,
+        activity_completed: activityCompleted || false,
+        nutrition_responses: nutritionResponses,
+        mood: mood,
+        points_earned: points,
+      });
+    }
 
     // Check for badges
     const badges: string[] = [];
