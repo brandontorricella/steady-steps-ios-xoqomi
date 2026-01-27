@@ -50,8 +50,8 @@ serve(async (req) => {
     // This avoids needing customer:read permission on restricted keys
     logStep("Proceeding without customer lookup");
 
-    // For now, create a checkout session with trial
-    // Users can create products in their Stripe dashboard
+    // Create a checkout session with 7-day trial
+    // After trial, Stripe automatically charges the payment method
     const origin = req.headers.get("origin") || "https://steadysteps.app";
     
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
@@ -61,17 +61,24 @@ serve(async (req) => {
       success_url: `${origin}/profile-setup?payment=success`,
       cancel_url: `${origin}/profile-setup?payment=cancel`,
       payment_method_collection: 'always',
+      subscription_data: {
+        trial_period_days: 7, // 7-day free trial
+        // After trial ends, Stripe automatically charges the saved payment method
+      },
       line_items: [
         {
           price_data: {
             currency: 'usd',
             product_data: {
               name: isAnnual ? 'SteadySteps Annual' : 'SteadySteps Monthly',
-              description: 'Your personal AI fitness and nutrition coach',
+              description: isAnnual 
+                ? 'Your personal AI fitness and nutrition coach - Annual subscription (billed yearly)'
+                : 'Your personal AI fitness and nutrition coach - Monthly subscription (billed on the 1st of each month)',
             },
             unit_amount: isAnnual ? 2999 : 499,
             recurring: {
               interval: isAnnual ? 'year' : 'month',
+              // For monthly, Stripe handles billing on the subscription anniversary date
             },
           },
           quantity: 1,
