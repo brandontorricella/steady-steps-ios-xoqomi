@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { OnboardingContainer } from '@/components/onboarding/OnboardingContainer';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { getUserProfile, saveUserProfile } from '@/lib/storage';
@@ -7,29 +6,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfileSync } from '@/hooks/useProfileSync';
 import { useLanguage, setStoredLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { fetchAndSyncProfile } = useProfileSync();
   const { setLanguage } = useLanguage();
-  const [searchParams] = useSearchParams();
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [loading, setLoading] = useState(true);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
-
-  // Check for payment success/cancelled from URL params
-  useEffect(() => {
-    const paymentStatus = searchParams.get('payment');
-    if (paymentStatus === 'success') {
-      toast.success('Payment successful! Welcome to SteadySteps.');
-      // Clear the URL param
-      window.history.replaceState({}, '', '/');
-    } else if (paymentStatus === 'cancelled') {
-      toast.info('Payment was cancelled. You can try again when ready.');
-      window.history.replaceState({}, '', '/');
-    }
-  }, [searchParams]);
 
   const checkSubscriptionStatus = useCallback(async () => {
     if (!user) return null;

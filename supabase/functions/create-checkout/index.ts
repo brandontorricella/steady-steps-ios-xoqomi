@@ -58,8 +58,8 @@ serve(async (req) => {
       customer_email: userEmail || undefined,
       payment_method_types: ['card'],
       mode: "subscription",
-      success_url: `${origin}/?payment=success`,
-      cancel_url: `${origin}/?payment=cancelled`,
+      success_url: `${origin}/profile-setup?payment=success`,
+      cancel_url: `${origin}/profile-setup?payment=cancel`,
       payment_method_collection: 'always',
       line_items: [
         {
