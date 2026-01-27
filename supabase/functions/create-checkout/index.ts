@@ -60,9 +60,7 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${origin}/?payment=success`,
       cancel_url: `${origin}/?payment=cancelled`,
-      subscription_data: {
-        trial_period_days: 7,
-      },
+      payment_method_collection: 'always',
       line_items: [
         {
           price_data: {

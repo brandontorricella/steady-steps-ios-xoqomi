@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,14 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Mail, Lock, Heart, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export const AuthPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { language } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const referralCode = searchParams.get('ref');
+
+  // If there's a referral code, default to signup mode
+  useEffect(() => {
+    if (referralCode) {
+      setIsLogin(false);
+    }
+  }, [referralCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +37,10 @@ export const AuthPage = () => {
           password,
         });
         if (error) throw error;
-        toast.success('Welcome back!');
+        toast.success(language === 'en' ? 'Welcome back!' : '¡Bienvenida de nuevo!');
         navigate('/');
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -37,22 +48,83 @@ export const AuthPage = () => {
           },
         });
         if (error) throw error;
-        toast.success('Account created! You can now log in.');
+
+        // If there's a referral code, create the referral record
+        if (referralCode && data.user) {
+          try {
+            await supabase.functions.invoke('process-referral', {
+              body: {
+                referralCode,
+                referredEmail: email,
+                referredUserId: data.user.id,
+                eventType: 'signup',
+              },
+            });
+          } catch (refError) {
+            console.error('Error processing referral:', refError);
+            // Don't fail signup if referral processing fails
+          }
+        }
+
+        toast.success(language === 'en' ? 'Account created! You can now log in.' : '¡Cuenta creada! Ahora puedes iniciar sesión.');
         navigate('/');
       }
     } catch (error: any) {
       console.error('Auth error:', error);
       if (error.message?.includes('already registered')) {
-        toast.error('This email is already registered. Try logging in instead.');
+        toast.error(language === 'en' 
+          ? 'This email is already registered. Try logging in instead.'
+          : 'Este correo ya está registrado. Intenta iniciar sesión.'
+        );
       } else if (error.message?.includes('Invalid login')) {
-        toast.error('Invalid email or password. Please try again.');
+        toast.error(language === 'en' 
+          ? 'Invalid email or password. Please try again.'
+          : 'Correo o contraseña inválidos. Intenta de nuevo.'
+        );
       } else {
-        toast.error(error.message || 'Something went wrong');
+        toast.error(error.message || (language === 'en' ? 'Something went wrong' : 'Algo salió mal'));
       }
     } finally {
       setIsLoading(false);
     }
   };
+
+  const texts = {
+    en: {
+      welcomeBack: 'Welcome Back',
+      joinTitle: 'Join SteadySteps',
+      referralTitle: "You've Been Invited!",
+      continueJourney: 'Continue your wellness journey',
+      startHabits: 'Start building healthier habits today',
+      referralSubtitle: 'A friend invited you to join SteadySteps',
+      email: 'Email',
+      password: 'Password',
+      signIn: 'Sign In',
+      createAccount: 'Create Account',
+      pleaseWait: 'Please wait...',
+      noAccount: "Don't have an account? Sign up",
+      hasAccount: 'Already have an account? Sign in',
+      back: 'Back',
+    },
+    es: {
+      welcomeBack: 'Bienvenida de Nuevo',
+      joinTitle: 'Únete a SteadySteps',
+      referralTitle: '¡Has Sido Invitada!',
+      continueJourney: 'Continúa tu camino de bienestar',
+      startHabits: 'Empieza a crear hábitos más saludables hoy',
+      referralSubtitle: 'Una amiga te invitó a unirte a SteadySteps',
+      email: 'Correo electrónico',
+      password: 'Contraseña',
+      signIn: 'Iniciar Sesión',
+      createAccount: 'Crear Cuenta',
+      pleaseWait: 'Por favor espera...',
+      noAccount: '¿No tienes cuenta? Regístrate',
+      hasAccount: '¿Ya tienes cuenta? Inicia sesión',
+      back: 'Atrás',
+    },
+  };
+
+  const t = texts[language];
 
   return (
     <div className="min-h-screen gradient-soft flex flex-col">
@@ -62,7 +134,7 @@ export const AuthPage = () => {
           className="flex items-center gap-2 text-muted-foreground"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
+          <span>{t.back}</span>
         </button>
       </header>
 
@@ -80,7 +152,7 @@ export const AuthPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-3xl font-heading font-bold mb-2 text-center"
         >
-          {isLogin ? 'Welcome Back' : 'Join SteadySteps'}
+          {isLogin ? t.welcomeBack : referralCode ? t.referralTitle : t.joinTitle}
         </motion.h1>
 
         <motion.p
@@ -90,8 +162,8 @@ export const AuthPage = () => {
           className="text-muted-foreground text-center mb-8"
         >
           {isLogin 
-            ? 'Continue your wellness journey'
-            : 'Start building healthier habits today'
+            ? t.continueJourney
+            : referralCode ? t.referralSubtitle : t.startHabits
           }
         </motion.p>
 
@@ -103,7 +175,7 @@ export const AuthPage = () => {
           className="w-full max-w-sm space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t.email}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -119,7 +191,7 @@ export const AuthPage = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t.password}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -141,7 +213,7 @@ export const AuthPage = () => {
             disabled={isLoading}
             className="w-full py-6 text-lg font-semibold"
           >
-            {isLoading ? 'Please wait...' : isLogin ? 'Sign In' : 'Create Account'}
+            {isLoading ? t.pleaseWait : isLogin ? t.signIn : t.createAccount}
           </Button>
         </motion.form>
 
@@ -152,10 +224,7 @@ export const AuthPage = () => {
           onClick={() => setIsLogin(!isLogin)}
           className="mt-6 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          {isLogin 
-            ? "Don't have an account? Sign up"
-            : 'Already have an account? Sign in'
-          }
+          {isLogin ? t.noAccount : t.hasAccount}
         </motion.button>
       </div>
     </div>
