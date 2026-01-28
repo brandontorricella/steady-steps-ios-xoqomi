@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Language } from '@/lib/i18n';
 
@@ -8,16 +7,11 @@ interface LanguageScreenProps {
 }
 
 export const LanguageScreen = ({ onNext }: LanguageScreenProps) => {
-  const { t, setLanguage, language } = useLanguage();
-  const navigate = useNavigate();
+  const { setLanguage } = useLanguage();
 
   const handleSelect = (lang: Language) => {
     setLanguage(lang);
     onNext();
-  };
-
-  const handleLogin = () => {
-    navigate('/auth');
   };
 
   return (
@@ -58,21 +52,6 @@ export const LanguageScreen = ({ onNext }: LanguageScreenProps) => {
         >
           <span className="text-3xl">🇲🇽</span>
           <span className="text-xl font-semibold">Español</span>
-        </button>
-      </motion.div>
-
-      {/* Login button for existing users */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mt-8"
-      >
-        <button
-          onClick={handleLogin}
-          className="text-primary hover:underline font-medium"
-        >
-          Already have an account? Log in / ¿Ya tienes cuenta? Inicia sesión
         </button>
       </motion.div>
     </div>

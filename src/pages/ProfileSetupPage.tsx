@@ -27,7 +27,7 @@ const ProfileSetupPage = () => {
     
     if (paymentParam === 'success') {
       setPaymentStatus('verifying');
-      verifyPaymentWithStripe();
+      verifyPaymentWithStripe(false); // Don't show error notification on success redirect
     } else if (paymentParam === 'cancel') {
       setPaymentStatus('pending');
       toast.info(
@@ -39,15 +39,23 @@ const ProfileSetupPage = () => {
   }, [searchParams, language]);
 
   // Verify payment with Stripe API
-  const verifyPaymentWithStripe = useCallback(async () => {
+  const verifyPaymentWithStripe = useCallback(async (showNotifications = true) => {
     setIsVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
         console.error('Subscription check error:', error);
+        if (showNotifications) {
+          // Show payment unsuccessful and trigger reset
+          toast.error(
+            language === 'en' 
+              ? '❌ Payment Unsuccessful. Please try again.' 
+              : '❌ Pago no exitoso. Por favor intenta de nuevo.'
+          );
+        }
         setPaymentStatus('pending');
-        return;
+        return false;
       }
       
       const hasValidSubscription = data && (
@@ -72,12 +80,29 @@ const ProfileSetupPage = () => {
             ? '✅ Payment received! You can now finish your profile.' 
             : '✅ ¡Pago recibido! Ahora puedes completar tu perfil.'
         );
+        return true;
       } else {
         setPaymentStatus('pending');
+        if (showNotifications) {
+          toast.error(
+            language === 'en' 
+              ? '❌ Payment Unsuccessful. No active subscription found.' 
+              : '❌ Pago no exitoso. No se encontró suscripción activa.'
+          );
+        }
+        return false;
       }
     } catch (err) {
       console.error('Failed to verify payment:', err);
       setPaymentStatus('pending');
+      if (showNotifications) {
+        toast.error(
+          language === 'en' 
+            ? '❌ Payment Unsuccessful. Please try again.' 
+            : '❌ Pago no exitoso. Por favor intenta de nuevo.'
+        );
+      }
+      return false;
     } finally {
       setIsVerifying(false);
     }
@@ -290,7 +315,13 @@ const ProfileSetupPage = () => {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={verifyPaymentWithStripe}
+                onClick={async () => {
+                  const success = await verifyPaymentWithStripe(true);
+                  if (!success) {
+                    // Payment verification failed - trigger reset
+                    await handleCancelAndGoBack();
+                  }
+                }}
                 disabled={isVerifying}
                 className="w-full py-5"
               >

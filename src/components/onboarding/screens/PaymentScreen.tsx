@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Check, Shield, Sparkles } from 'lucide-react';
@@ -14,19 +13,9 @@ interface PaymentScreenProps {
 
 export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const { t, language } = useLanguage();
-  const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
   const [isLoading, setIsLoading] = useState(false);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
-
-  // Detect iOS WebView or standalone PWA
-  const isIOSWebView = () => {
-    const userAgent = navigator.userAgent || '';
-    const isIOS = /iPhone|iPad|iPod/.test(userAgent);
-    const isWebView = isIOS && !/Safari/.test(userAgent);
-    const isStandalone = (window.navigator as any).standalone === true;
-    return isIOS && (isWebView || isStandalone);
-  };
 
   const handleStartTrial = async () => {
     setIsLoading(true);
@@ -41,25 +30,16 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
       if (data?.url) {
         const checkoutUrl = data.url.startsWith('https://') ? data.url : data.url.replace('http://', 'https://');
         
-        if (isIOSWebView()) {
-          // iOS WebView/PWA: Redirect to Safari
-          toast.info(
-            language === 'en' 
-              ? 'Opening payment in Safari. Return to the app after completing.' 
-              : 'Abriendo pago en Safari. Regresa a la app después de completar.'
-          );
-          window.location.href = checkoutUrl;
-        } else {
-          // Desktop/Android: Open in new tab, then redirect to profile-setup
-          window.open(checkoutUrl, '_blank');
-          toast.info(
-            language === 'en' 
-              ? 'Complete payment in the new tab. You will be redirected after.' 
-              : 'Completa el pago en la nueva pestaña. Serás redirigido después.'
-          );
-          // Redirect to profile-setup page where they can verify payment
-          navigate('/profile-setup');
-        }
+        // Always redirect in the same window to ensure payment completion
+        // This works better on mobile and prevents users from bypassing payment
+        toast.info(
+          language === 'en' 
+            ? 'Redirecting to payment...' 
+            : 'Redirigiendo al pago...'
+        );
+        
+        // Use location.href for all platforms to ensure Stripe checkout opens properly
+        window.location.href = checkoutUrl;
       }
     } catch (error) {
       console.error('Checkout error:', error);
