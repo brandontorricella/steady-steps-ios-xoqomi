@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Footprints } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -8,7 +9,12 @@ interface WelcomeScreenProps {
 }
 
 export const WelcomeScreen = ({ onNext }: WelcomeScreenProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const navigate = useNavigate();
+
+  const handleLogin = () => {
+    navigate('/auth');
+  };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
@@ -43,10 +49,20 @@ export const WelcomeScreen = ({ onNext }: WelcomeScreenProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
+        className="space-y-4"
       >
         <Button size="lg" onClick={onNext} className="px-12 py-6 text-lg font-semibold">
           {t('welcome.getStarted')}
         </Button>
+
+        <div>
+          <button
+            onClick={handleLogin}
+            className="text-primary hover:underline font-medium text-sm"
+          >
+            {language === 'en' ? 'Already have an account? Log in' : '¿Ya tienes cuenta? Inicia sesión'}
+          </button>
+        </div>
       </motion.div>
     </div>
   );

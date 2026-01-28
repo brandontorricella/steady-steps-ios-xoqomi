@@ -13,6 +13,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { CoachPage } from "./pages/CoachPage";
 import { AuthPage } from "./pages/AuthPage";
 import { HabitLibraryPage } from "./pages/HabitLibraryPage";
+import { HiddenCaloriesPage } from "./pages/HiddenCaloriesPage";
 import { WeeklySummaryPage } from "./pages/WeeklySummaryPage";
 import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { LegalPage } from "./pages/LegalPage";
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/coach" element={<CoachPage />} />
               <Route path="/habit-library" element={<HabitLibraryPage />} />
+              <Route path="/hidden-calories" element={<HiddenCaloriesPage />} />
               <Route path="/community" element={<CommunityPage />} />
               <Route path="/weekly-summary" element={<WeeklySummaryPage />} />
               <Route path="/subscription" element={<SubscriptionPage />} />

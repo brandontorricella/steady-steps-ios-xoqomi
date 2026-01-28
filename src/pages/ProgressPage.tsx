@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, subMonths, addMonths } from 'date-fns';
 import { getDailyCheckins, getUserProfile } from '@/lib/storage';
 import { DailyCheckin, UserProfile, LEVELS, getStageDescription } from '@/lib/types';
-import { ArrowLeft, ChevronLeft, ChevronRight, Check, Minus, Award, BookOpen } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Check, Minus, Award, BookOpen, UtensilsCrossed } from 'lucide-react';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
@@ -202,7 +202,7 @@ export const ProgressPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="grid grid-cols-2 gap-4"
+          className="grid grid-cols-3 gap-3"
         >
           <Button
             variant="outline"
@@ -210,7 +210,7 @@ export const ProgressPage = () => {
             className="h-auto py-4 flex flex-col gap-2"
           >
             <Award className="w-6 h-6 text-primary" />
-            <span>Badges</span>
+            <span className="text-xs">Badges</span>
           </Button>
           <Button
             variant="outline"
@@ -218,7 +218,15 @@ export const ProgressPage = () => {
             className="h-auto py-4 flex flex-col gap-2"
           >
             <BookOpen className="w-6 h-6 text-primary" />
-            <span>Habit Library</span>
+            <span className="text-xs">Habit Library</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/hidden-calories')}
+            className="h-auto py-4 flex flex-col gap-2"
+          >
+            <UtensilsCrossed className="w-6 h-6 text-primary" />
+            <span className="text-xs">Hidden Calories</span>
           </Button>
         </motion.div>
       </main>

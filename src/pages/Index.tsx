@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { OnboardingContainer } from '@/components/onboarding/OnboardingContainer';
 import { Dashboard } from '@/components/dashboard/Dashboard';
+import { SplashScreen } from '@/components/SplashScreen';
 import { getUserProfile, saveUserProfile } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileSync } from '@/hooks/useProfileSync';
 import { useLanguage, setStoredLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
+import steadyLogo from '@/assets/steady-logo.png';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -14,6 +17,7 @@ const Index = () => {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [loading, setLoading] = useState(true);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   const checkSubscriptionStatus = useCallback(async () => {
     if (!user) return null;
@@ -90,6 +94,38 @@ const Index = () => {
       checkProfile();
     }
   }, [user, authLoading, fetchAndSyncProfile, checkSubscriptionStatus]);
+
+  // Handle splash screen completion
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  // Show splash screen first
+  if (showSplash) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          key="splash"
+          className="fixed inset-0 bg-white flex items-center justify-center z-50"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.img
+            src={steadyLogo}
+            alt="SteadySteps"
+            className="w-32 h-32 object-contain"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            onAnimationComplete={() => {
+              setTimeout(handleSplashComplete, 1500);
+            }}
+          />
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
 
   if (loading || authLoading || checkingSubscription) {
     return (
