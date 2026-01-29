@@ -56,6 +56,9 @@ export const useProfileSync = () => {
           activeLibraryHabits: data.active_library_habits || [],
           weeklySummaryEnabled: data.weekly_summary_enabled ?? true,
           streakAtLoss: data.streak_at_loss || 0,
+          biggestObstacle: (data.biggest_obstacle as UserProfile['biggestObstacle']) || 'time',
+          dietPreference: (data.diet_preference as UserProfile['dietPreference']) || 'no_preference',
+          fitnessConfidence: data.fitness_confidence || 3,
         };
 
         // Save to local storage
@@ -108,6 +111,9 @@ export const useProfileSync = () => {
           active_library_habits: profile.activeLibraryHabits,
           weekly_summary_enabled: profile.weeklySummaryEnabled,
           streak_at_loss: profile.streakAtLoss,
+          biggest_obstacle: profile.biggestObstacle,
+          diet_preference: profile.dietPreference,
+          fitness_confidence: profile.fitnessConfidence,
           updated_at: new Date().toISOString(),
         });
 

@@ -8,13 +8,16 @@ import { GoalScreen } from './screens/GoalScreen';
 import { ActivityLevelScreen } from './screens/ActivityLevelScreen';
 import { NutritionChallengeScreen } from './screens/NutritionChallengeScreen';
 import { TimeCommitmentScreen } from './screens/TimeCommitmentScreen';
+import { ObstacleScreen } from './screens/ObstacleScreen';
+import { DietPreferenceScreen } from './screens/DietPreferenceScreen';
+import { ConfidenceScreen } from './screens/ConfidenceScreen';
 import { MeetCoachScreen } from './screens/MeetCoachScreen';
 import { NotificationScreen } from './screens/NotificationScreen';
 import { TermsScreen } from './screens/TermsScreen';
 import { PaymentScreen } from './screens/PaymentScreen';
 import { StartingPointScreen } from './screens/StartingPointScreen';
 import { FirstDayScreen } from './screens/FirstDayScreen';
-import { UserProfile, getActivityGoalFromCommitment } from '@/lib/types';
+import { UserProfile, getActivityGoalFromCommitment, BiggestObstacle, DietPreference } from '@/lib/types';
 import { saveUserProfile, getDefaultUserProfile } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileSync } from '@/hooks/useProfileSync';
@@ -70,13 +73,16 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
   // 4: Goal
   // 5: Activity Level
   // 6: Nutrition Challenge
-  // 7: Time Commitment
-  // 8: Meet Coach
-  // 9: Notifications
-  // 10: Terms & Privacy
-  // 11: Payment
-  // 12: Starting Point
-  // 13: First Day
+  // 7: Biggest Obstacle (NEW)
+  // 8: Diet Preference (NEW)
+  // 9: Confidence Level (NEW)
+  // 10: Time Commitment
+  // 11: Meet Coach
+  // 12: Notifications
+  // 13: Terms & Privacy
+  // 14: Payment
+  // 15: Starting Point
+  // 16: First Day
   const screens = [
     <LanguageScreen key="language" onNext={handleNext} />,
     <WelcomeScreen key="welcome" onNext={handleNext} />,
@@ -85,6 +91,9 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
     <GoalScreen key="goal" value={profile.primaryGoal} onChange={(v) => updateProfile({ primaryGoal: v })} onNext={handleNext} />,
     <ActivityLevelScreen key="activity" value={profile.activityLevel} onChange={(v) => updateProfile({ activityLevel: v })} onNext={handleNext} />,
     <NutritionChallengeScreen key="nutrition" value={profile.primaryNutritionChallenge} onChange={(v) => updateProfile({ primaryNutritionChallenge: v })} onNext={handleNext} />,
+    <ObstacleScreen key="obstacle" value={profile.biggestObstacle} onChange={(v) => updateProfile({ biggestObstacle: v })} onNext={handleNext} />,
+    <DietPreferenceScreen key="diet" value={profile.dietPreference} onChange={(v) => updateProfile({ dietPreference: v })} onNext={handleNext} />,
+    <ConfidenceScreen key="confidence" value={profile.fitnessConfidence} onChange={(v) => updateProfile({ fitnessConfidence: v })} onNext={handleNext} />,
     <TimeCommitmentScreen key="time" value={profile.dailyTimeCommitment} onChange={(v) => updateProfile({ dailyTimeCommitment: v })} onNext={handleNext} />,
     <MeetCoachScreen key="coach" onNext={handleNext} />,
     <NotificationScreen 
