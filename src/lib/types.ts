@@ -7,6 +7,9 @@ export type TimeCommitment = '5_to_10' | '10_to_15' | '15_to_20' | '20_to_30' | 
 export type Stage = 'beginner' | 'consistent' | 'confident';
 export type Mood = 'great' | 'good' | 'okay' | 'stressed' | 'tired';
 export type BadgeCategory = 'streak' | 'activity' | 'nutrition' | 'perfect_day' | 'stage_level' | 'comeback' | 'special' | 'mood';
+export type BiggestObstacle = 'time' | 'motivation' | 'energy' | 'stress' | 'confusion';
+export type DietPreference = 'no_preference' | 'vegetarian' | 'low_carb' | 'traditional';
+export type HabitCompletion = 'yes' | 'somewhat' | 'no';
 
 export interface UserProfile {
   id?: string;
@@ -43,6 +46,10 @@ export interface UserProfile {
   activeLibraryHabits: string[];
   weeklySummaryEnabled: boolean;
   streakAtLoss: number;
+  // New personalization fields
+  biggestObstacle: BiggestObstacle;
+  dietPreference: DietPreference;
+  fitnessConfidence: number; // 1-5 scale
 }
 
 export interface DailyCheckin {
@@ -54,6 +61,11 @@ export interface DailyCheckin {
   mood?: Mood;
   libraryHabitsCompleted?: string[];
   pointsEarned: number;
+  // Daily wellness tracking
+  stressLevel?: number | null; // 1-5
+  sleepQuality?: number | null; // 1-5
+  energyLevel?: number | null; // 1-5
+  habitCompletion?: HabitCompletion;
 }
 
 export interface Badge {

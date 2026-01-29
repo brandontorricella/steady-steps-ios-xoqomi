@@ -38,6 +38,9 @@ export const getDefaultUserProfile = (): UserProfile => ({
   activeLibraryHabits: [],
   weeklySummaryEnabled: true,
   streakAtLoss: 0,
+  biggestObstacle: 'time',
+  dietPreference: 'no_preference',
+  fitnessConfidence: 3,
 });
 
 export const getUserProfile = (): UserProfile | null => {

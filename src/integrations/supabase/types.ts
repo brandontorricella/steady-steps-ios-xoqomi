@@ -91,11 +91,15 @@ export type Database = {
           checkin_completed: boolean | null
           created_at: string | null
           date: string
+          energy_level: number | null
+          habit_completion: string | null
           id: string
           library_habits_completed: string[] | null
           mood: string | null
           nutrition_responses: Json | null
           points_earned: number | null
+          sleep_quality: number | null
+          stress_level: number | null
           user_id: string
         }
         Insert: {
@@ -103,11 +107,15 @@ export type Database = {
           checkin_completed?: boolean | null
           created_at?: string | null
           date: string
+          energy_level?: number | null
+          habit_completion?: string | null
           id?: string
           library_habits_completed?: string[] | null
           mood?: string | null
           nutrition_responses?: Json | null
           points_earned?: number | null
+          sleep_quality?: number | null
+          stress_level?: number | null
           user_id: string
         }
         Update: {
@@ -115,11 +123,15 @@ export type Database = {
           checkin_completed?: boolean | null
           created_at?: string | null
           date?: string
+          energy_level?: number | null
+          habit_completion?: string | null
           id?: string
           library_habits_completed?: string[] | null
           mood?: string | null
           nutrition_responses?: Json | null
           points_earned?: number | null
+          sleep_quality?: number | null
+          stress_level?: number | null
           user_id?: string
         }
         Relationships: [
@@ -136,6 +148,7 @@ export type Database = {
         Row: {
           active_library_habits: string[] | null
           activity_level: string | null
+          biggest_obstacle: string | null
           coach_conversations_count: number | null
           created_at: string | null
           current_activity_goal_minutes: number | null
@@ -143,9 +156,11 @@ export type Database = {
           current_stage: string | null
           current_streak: number | null
           daily_time_commitment: string | null
+          diet_preference: string | null
           email: string
           evening_reminder_time: string | null
           first_name: string | null
+          fitness_confidence: number | null
           id: string
           language: string | null
           last_checkin_date: string | null
@@ -173,6 +188,7 @@ export type Database = {
         Insert: {
           active_library_habits?: string[] | null
           activity_level?: string | null
+          biggest_obstacle?: string | null
           coach_conversations_count?: number | null
           created_at?: string | null
           current_activity_goal_minutes?: number | null
@@ -180,9 +196,11 @@ export type Database = {
           current_stage?: string | null
           current_streak?: number | null
           daily_time_commitment?: string | null
+          diet_preference?: string | null
           email: string
           evening_reminder_time?: string | null
           first_name?: string | null
+          fitness_confidence?: number | null
           id: string
           language?: string | null
           last_checkin_date?: string | null
@@ -210,6 +228,7 @@ export type Database = {
         Update: {
           active_library_habits?: string[] | null
           activity_level?: string | null
+          biggest_obstacle?: string | null
           coach_conversations_count?: number | null
           created_at?: string | null
           current_activity_goal_minutes?: number | null
@@ -217,9 +236,11 @@ export type Database = {
           current_stage?: string | null
           current_streak?: number | null
           daily_time_commitment?: string | null
+          diet_preference?: string | null
           email?: string
           evening_reminder_time?: string | null
           first_name?: string | null
+          fitness_confidence?: number | null
           id?: string
           language?: string | null
           last_checkin_date?: string | null

@@ -15,6 +15,8 @@ import { MicroLessons, MicroLessonCard } from '@/components/education/MicroLesso
 import { FlexibleProgress } from '@/components/habits/FlexibleProgress';
 import { QuickHabitLog } from '@/components/habits/QuickHabitLog';
 import { CommunityNudge } from '@/components/feedback/CommunityNudge';
+import { WellnessWidget } from './WellnessWidget';
+import { ProgressInsights } from './ProgressInsights';
 import { useLanguage } from '@/hooks/useLanguage';
 
 export const Dashboard = () => {
@@ -167,6 +169,12 @@ export const Dashboard = () => {
             </div>
           </motion.div>
         )}
+
+        {/* Progress Insights */}
+        <ProgressInsights />
+
+        {/* Wellness Widget */}
+        <WellnessWidget />
 
         {/* Quick Habit Log */}
         <motion.div
