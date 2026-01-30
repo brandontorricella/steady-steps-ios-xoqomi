@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { AuthProvider } from "@/hooks/useAuth";
+import { NotBehindModeProvider } from "@/hooks/useNotBehindMode";
 import Index from "./pages/Index";
 import ProfileSetupPage from "./pages/ProfileSetupPage";
 import { BadgesPage } from "./pages/BadgesPage";
@@ -27,30 +28,32 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/profile-setup" element={<ProfileSetupPage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/badges" element={<BadgesPage />} />
-              <Route path="/progress" element={<ProgressPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/coach" element={<CoachPage />} />
-              <Route path="/habit-library" element={<HabitLibraryPage />} />
-              <Route path="/hidden-calories" element={<HiddenCaloriesPage />} />
-              <Route path="/community" element={<CommunityPage />} />
-              <Route path="/weekly-summary" element={<WeeklySummaryPage />} />
-              <Route path="/subscription" element={<SubscriptionPage />} />
-              <Route path="/legal" element={<LegalPage />} />
-              <Route path="/help" element={<HelpPage />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <NotBehindModeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/profile-setup" element={<ProfileSetupPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/badges" element={<BadgesPage />} />
+                <Route path="/progress" element={<ProgressPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/coach" element={<CoachPage />} />
+                <Route path="/habit-library" element={<HabitLibraryPage />} />
+                <Route path="/hidden-calories" element={<HiddenCaloriesPage />} />
+                <Route path="/community" element={<CommunityPage />} />
+                <Route path="/weekly-summary" element={<WeeklySummaryPage />} />
+                <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/legal" element={<LegalPage />} />
+                <Route path="/help" element={<HelpPage />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </NotBehindModeProvider>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>

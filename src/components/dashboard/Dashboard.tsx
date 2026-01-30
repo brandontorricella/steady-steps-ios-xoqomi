@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
+import { format, isMonday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
 import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
 import { getUserProfile, getTodayCheckin, getWeeklyStats } from '@/lib/storage';
-import { Flame, Trophy, Check, Settings2, CalendarDays } from 'lucide-react';
+import { Flame, Trophy, Check, Settings2, CalendarDays, Sparkles } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
 import { DailyTipCard } from './DailyTipCard';
 import { CoachTipCard } from './CoachTipCard';
@@ -17,16 +17,50 @@ import { QuickHabitLog } from '@/components/habits/QuickHabitLog';
 import { CommunityNudge } from '@/components/feedback/CommunityNudge';
 import { WellnessWidget } from './WellnessWidget';
 import { ProgressInsights } from './ProgressInsights';
+import { WeeklyReflectionModal } from './WeeklyReflectionModal';
+import { NotBehindBanner } from './NotBehindBanner';
+import { useNotificationLogic } from '@/components/notifications/NotificationLogic';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showCheckin, setShowCheckin] = useState(false);
   const [todayCompleted, setTodayCompleted] = useState(false);
   const [showMicroLessons, setShowMicroLessons] = useState(false);
   const [showFlexibleProgress, setShowFlexibleProgress] = useState(false);
+  const [showWeeklyReflection, setShowWeeklyReflection] = useState(false);
   const { language } = useLanguage();
+  const { notification } = useNotificationLogic();
+
+  // Check if we should show weekly reflection (Monday, first login of the week)
+  useEffect(() => {
+    const checkWeeklyReflection = async () => {
+      if (!user) return;
+      
+      const today = new Date();
+      if (isMonday(today)) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('last_weekly_summary_date')
+          .eq('id', user.id)
+          .single();
+        
+        const lastSummary = profileData?.last_weekly_summary_date;
+        const todayStr = today.toISOString().split('T')[0];
+        
+        // Show if no summary this week or last summary was before this Monday
+        if (!lastSummary || lastSummary < todayStr) {
+          setShowWeeklyReflection(true);
+        }
+      }
+    };
+    
+    checkWeeklyReflection();
+  }, [user]);
 
   useEffect(() => {
     const userProfile = getUserProfile();
@@ -106,6 +140,23 @@ export const Dashboard = () => {
 
       {/* Main Content */}
       <main className="px-6 space-y-6 mt-6">
+        {/* Gentle Notification Banner */}
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-2xl bg-gradient-to-r from-secondary to-accent/10 border border-border"
+          >
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <p className="text-sm">{notification.message}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Not Behind Banner */}
+        <NotBehindBanner />
+
         {/* Streak Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -278,6 +329,12 @@ export const Dashboard = () => {
         onClose={() => setShowFlexibleProgress(false)}
         profile={profile}
         onProfileUpdate={setProfile}
+      />
+
+      {/* Weekly Reflection Modal (shown on Mondays) */}
+      <WeeklyReflectionModal
+        isOpen={showWeeklyReflection}
+        onClose={() => setShowWeeklyReflection(false)}
       />
     </div>
   );

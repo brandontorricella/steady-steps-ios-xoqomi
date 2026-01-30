@@ -24,12 +24,15 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+import { ExitFeedbackModal } from '@/components/feedback/ExitFeedbackModal';
+
 export const SettingsPage = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showDeleteFlow, setShowDeleteFlow] = useState(false);
   const [showCancelFlow, setShowCancelFlow] = useState(false);
+  const [showExitFeedback, setShowExitFeedback] = useState(false);
   const [deleteStep, setDeleteStep] = useState(1);
   const [cancelStep, setCancelStep] = useState(1);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -57,6 +60,17 @@ export const SettingsPage = () => {
 
   const confirmWord = language === 'es' ? 'ELIMINAR' : 'DELETE';
   const isConfirmValid = deleteConfirmText.toUpperCase() === confirmWord;
+
+  // Start cancel flow by showing exit feedback first
+  const handleStartCancelFlow = () => {
+    setShowExitFeedback(true);
+  };
+
+  // After exit feedback, proceed to actual cancellation
+  const handleExitFeedbackComplete = () => {
+    setShowExitFeedback(false);
+    setShowCancelFlow(true);
+  };
 
   const handleCancelSubscription = async () => {
     setIsCancelling(true);
@@ -446,7 +460,7 @@ export const SettingsPage = () => {
             </button>
             
             <button 
-              onClick={() => setShowCancelFlow(true)}
+              onClick={handleStartCancelFlow}
               className="w-full p-4 rounded-xl border border-destructive/30 bg-background flex items-center gap-4 hover:border-destructive/50 transition-colors"
             >
               <XCircle className="w-5 h-5 text-destructive" />
@@ -631,6 +645,13 @@ export const SettingsPage = () => {
       </main>
 
       <BottomNavigation />
+
+      {/* Exit Feedback Modal */}
+      <ExitFeedbackModal
+        isOpen={showExitFeedback}
+        onClose={() => setShowExitFeedback(false)}
+        onComplete={handleExitFeedbackComplete}
+      />
     </div>
   );
 };
