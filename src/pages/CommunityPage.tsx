@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
+import { AccountabilityMatching } from '@/components/community/AccountabilityMatching';
 import { toast } from 'sonner';
 import { getUserProfile } from '@/lib/storage';
 import { supabase } from '@/integrations/supabase/client';
@@ -181,6 +182,9 @@ export const CommunityPage = () => {
             </Button>
           </motion.section>
         )}
+
+        {/* Accountability Partner Matching */}
+        <AccountabilityMatching />
 
         {/* Share Section */}
         <motion.section

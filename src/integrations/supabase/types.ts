@@ -144,11 +144,41 @@ export type Database = {
           },
         ]
       }
+      exit_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exit_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_library_habits: string[] | null
           activity_level: string | null
           biggest_obstacle: string | null
+          buddy_match_opt_in: boolean | null
           coach_conversations_count: number | null
           created_at: string | null
           current_activity_goal_minutes: number | null
@@ -164,9 +194,12 @@ export type Database = {
           id: string
           language: string | null
           last_checkin_date: string | null
+          last_weekly_summary_date: string | null
           longest_streak: number | null
           midday_nudge_enabled: boolean | null
           morning_reminder_time: string | null
+          not_behind_mode_activated_at: string | null
+          not_behind_mode_active: boolean | null
           nutrition_questions_count: number | null
           onboarding_completed: boolean | null
           primary_goal: string | null
@@ -189,6 +222,7 @@ export type Database = {
           active_library_habits?: string[] | null
           activity_level?: string | null
           biggest_obstacle?: string | null
+          buddy_match_opt_in?: boolean | null
           coach_conversations_count?: number | null
           created_at?: string | null
           current_activity_goal_minutes?: number | null
@@ -204,9 +238,12 @@ export type Database = {
           id: string
           language?: string | null
           last_checkin_date?: string | null
+          last_weekly_summary_date?: string | null
           longest_streak?: number | null
           midday_nudge_enabled?: boolean | null
           morning_reminder_time?: string | null
+          not_behind_mode_activated_at?: string | null
+          not_behind_mode_active?: boolean | null
           nutrition_questions_count?: number | null
           onboarding_completed?: boolean | null
           primary_goal?: string | null
@@ -229,6 +266,7 @@ export type Database = {
           active_library_habits?: string[] | null
           activity_level?: string | null
           biggest_obstacle?: string | null
+          buddy_match_opt_in?: boolean | null
           coach_conversations_count?: number | null
           created_at?: string | null
           current_activity_goal_minutes?: number | null
@@ -244,9 +282,12 @@ export type Database = {
           id?: string
           language?: string | null
           last_checkin_date?: string | null
+          last_weekly_summary_date?: string | null
           longest_streak?: number | null
           midday_nudge_enabled?: boolean | null
           morning_reminder_time?: string | null
+          not_behind_mode_activated_at?: string | null
+          not_behind_mode_active?: boolean | null
           nutrition_questions_count?: number | null
           onboarding_completed?: boolean | null
           primary_goal?: string | null

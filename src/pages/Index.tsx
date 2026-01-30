@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfileSync } from '@/hooks/useProfileSync';
 import { useLanguage, setStoredLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
-import steadyLogo from '@/assets/steady-logo.png';
+import steadyLogo from '@/assets/steady-logo-new.png';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();

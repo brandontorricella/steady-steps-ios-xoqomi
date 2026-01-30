@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import steadyLogo from '@/assets/steady-logo.png';
+import steadyLogo from '@/assets/steady-logo-new.png';
 
 interface SplashScreenProps {
   onComplete: () => void;
