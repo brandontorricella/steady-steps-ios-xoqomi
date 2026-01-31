@@ -114,14 +114,14 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           }`}
         >
           <div className="absolute -top-2 left-4 px-2 py-0.5 bg-gold text-gold-foreground text-xs font-semibold rounded-full">
-            {t('payment.save')}
+            {language === 'en' ? 'Save 30%' : 'Ahorra 30%'}
           </div>
           <div className="text-left">
             <p className="font-semibold text-lg">{t('payment.annual')}</p>
             <p className="text-muted-foreground text-sm">{t('payment.annualDesc')}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">$29.99</p>
+            <p className="text-2xl font-bold text-primary">$41.88</p>
             <p className="text-sm text-muted-foreground">{t('payment.perYear')}</p>
           </div>
           {selectedPlan === 'annual' && (

@@ -149,7 +149,7 @@ export const translations = {
       monthlyDesc: 'Flexible, cancel anytime',
       annual: 'Annual',
       annualDesc: 'Best value',
-      save: 'Save 50%',
+      save: 'Save 30%',
       perMonth: '/month',
       perYear: '/year',
       startTrial: 'Start My Free 7-Day Trial',

@@ -78,7 +78,7 @@ serve(async (req) => {
                 ? 'Your personal AI fitness and nutrition coach - Annual subscription (billed yearly)'
                 : 'Your personal AI fitness and nutrition coach - Monthly subscription (billed on the 1st of each month)',
             },
-            unit_amount: isAnnual ? 2999 : 499,
+            unit_amount: isAnnual ? 4188 : 499, // Annual is 30% off ($4.99 * 12 * 0.7 = $41.88)
             recurring: {
               interval: isAnnual ? 'year' : 'month',
               // For monthly, Stripe handles billing on the subscription anniversary date

@@ -48,6 +48,24 @@ export const AuthPage = () => {
             setLanguage(profile.language as 'en' | 'es');
             setStoredLanguage(profile.language as 'en' | 'es');
           }
+          
+          // Check if user has active subscription
+          const { data: subData } = await supabase.functions.invoke('check-subscription');
+          const hasActiveSubscription = subData && (
+            subData.subscribed || 
+            subData.status === 'active' || 
+            subData.status === 'trialing'
+          );
+          
+          if (!hasActiveSubscription) {
+            // No payment on file - redirect to payment page
+            toast.info(language === 'en' 
+              ? 'Please complete payment to continue.' 
+              : 'Por favor completa el pago para continuar.'
+            );
+            navigate('/profile-setup');
+            return;
+          }
         }
         
         toast.success(language === 'en' ? 'Welcome back!' : '¡Bienvenida de nuevo!');
