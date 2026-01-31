@@ -139,7 +139,7 @@ export const TermsScreen = ({ onNext }: TermsScreenProps) => {
               <p>SteadySteps offers subscription plans to access premium features:</p>
               <ul>
                 <li>Monthly subscription: $4.99 per month</li>
-                <li>Annual subscription: $29.99 per year</li>
+                <li>Annual subscription: $41.88 per year (30% savings)</li>
               </ul>
               <p>Free Trial: New users receive a 7-day free trial. Your subscription will automatically begin after the trial ends unless cancelled.</p>
 

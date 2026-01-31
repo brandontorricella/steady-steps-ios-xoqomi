@@ -242,14 +242,14 @@ export const SubscriptionPage = () => {
               className="w-full p-4 rounded-xl border-2 border-border hover:border-primary/50 flex items-center justify-between relative transition-colors"
             >
               <div className="absolute -top-2 left-4 px-2 py-0.5 bg-gold text-gold-foreground text-xs font-semibold rounded-full">
-                {language === 'en' ? 'Save 50%' : 'Ahorra 50%'}
+                {language === 'en' ? 'Save 30%' : 'Ahorra 30%'}
               </div>
               <div className="text-left">
                 <p className="font-semibold">{language === 'en' ? 'Annual' : 'Anual'}</p>
-                <p className="text-sm text-muted-foreground">$29.99/year</p>
+                <p className="text-sm text-muted-foreground">$41.88/year</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-bold">$29.99</span>
+                <span className="font-bold">$41.88</span>
                 <Sparkles className="w-5 h-5 text-gold" />
               </div>
             </button>
