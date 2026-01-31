@@ -59,7 +59,7 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
-    // Try to find customer - handle restricted key gracefully
+    // Try to find customer - CRITICAL: No customer = no payment
     let customerId: string | null = null;
     try {
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -68,26 +68,26 @@ serve(async (req) => {
         logStep("Found Stripe customer", { customerId });
       }
     } catch (listError: any) {
-      // If we can't list customers due to restricted key permissions, 
-      // assume trial/pending status instead of failing
-      logStep("Customer lookup failed (restricted key), assuming trial status", { error: listError.message });
+      // If we can't list customers due to restricted key permissions,
+      // return subscribed: false to be safe - payment cannot be verified
+      logStep("Customer lookup failed (restricted key)", { error: listError.message });
       return new Response(JSON.stringify({ 
-        subscribed: true, // Allow access during trial/onboarding
-        status: 'trial',
-        trialEndsAt: null,
-        note: 'restricted_key'
+        subscribed: false,
+        status: 'unknown',
+        message: 'Unable to verify payment status. Please contact support if you believe this is an error.'
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
     
+    // CRITICAL: No Stripe customer means user has NOT completed checkout
     if (!customerId) {
-      logStep("No customer found, returning trial status");
+      logStep("No customer found - user has not completed payment");
       return new Response(JSON.stringify({ 
-        subscribed: true, // Allow access - they may be in trial
-        status: 'trial',
-        trialEndsAt: null 
+        subscribed: false,
+        status: 'none',
+        message: 'No payment found. Please complete checkout to continue.'
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -131,12 +131,12 @@ serve(async (req) => {
         logStep("No active subscription found");
       }
     } catch (subError: any) {
-      // If subscription lookup fails, assume trial access
-      logStep("Subscription lookup failed (restricted key)", { error: subError.message });
+      // If subscription lookup fails, return unsubscribed to be safe
+      logStep("Subscription lookup failed", { error: subError.message });
       return new Response(JSON.stringify({
-        subscribed: true,
-        status: 'trial',
-        note: 'restricted_key'
+        subscribed: false,
+        status: 'unknown',
+        message: 'Unable to verify subscription. Please contact support if you believe this is an error.'
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
