@@ -155,11 +155,13 @@ export const AccountabilityMatching = () => {
         return;
       }
 
-      // Filter out users who already have a buddy
+      // Filter out users who already have a buddy - only check connections for potential buddies
+      const buddyIds = potentialBuddies.map(b => b.id);
       const { data: existingConnections } = await supabase
         .from('buddy_connections')
         .select('user_id, buddy_id')
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .or(`user_id.in.(${buddyIds.join(',')}),buddy_id.in.(${buddyIds.join(',')})`);
 
       const connectedUserIds = new Set<string>();
       existingConnections?.forEach(c => {
