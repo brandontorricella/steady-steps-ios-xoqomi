@@ -317,10 +317,12 @@ const ProfileSetupPage = () => {
                 size="lg"
                 onClick={async () => {
                   const success = await verifyPaymentWithStripe(true);
-                  if (!success) {
-                    // Payment verification failed - trigger reset
-                    await handleCancelAndGoBack();
+                  if (success) {
+                    // Payment verified - proceed to complete profile
+                    setPaymentStatus('paid');
                   }
+                  // If verification fails, stay on page - error toast already shown
+                  // Do NOT reset or delete user data - they just haven't paid yet
                 }}
                 disabled={isVerifying}
                 className="w-full py-5"
