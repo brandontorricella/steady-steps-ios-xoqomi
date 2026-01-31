@@ -1,11 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const CheckoutSchema = z.object({
+  priceId: z.string().optional(),
+  isAnnual: z.boolean()
+});
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -20,7 +27,28 @@ serve(async (req) => {
   try {
     logStep("Function started");
     
-    const { priceId, isAnnual } = await req.json();
+    // Parse and validate input
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      logStep("Invalid JSON body");
+      return new Response(JSON.stringify({ error: "Invalid request format" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const parseResult = CheckoutSchema.safeParse(body);
+    if (!parseResult.success) {
+      logStep("Validation failed", { errors: parseResult.error.flatten() });
+      return new Response(JSON.stringify({ error: "Invalid request parameters" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const { priceId, isAnnual } = parseResult.data;
     logStep("Received request", { priceId, isAnnual });
 
     const supabaseClient = createClient(
@@ -30,7 +58,6 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     let userEmail: string | null = null;
-    let customerId: string | undefined;
 
     if (authHeader) {
       const token = authHeader.replace("Bearer ", "");
@@ -99,7 +126,9 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ 
+      error: "Unable to create checkout session. Please try again or contact support." 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

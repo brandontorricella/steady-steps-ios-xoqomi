@@ -1,11 +1,29 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schemas
+const SignupEventSchema = z.object({
+  eventType: z.literal('signup'),
+  referralCode: z.string().min(1).max(50),
+  referredEmail: z.string().email().max(255),
+  referredUserId: z.string().uuid()
+});
+
+const PaidEventSchema = z.object({
+  eventType: z.literal('paid'),
+  referredUserId: z.string().uuid(),
+  referralCode: z.string().optional(),
+  referredEmail: z.string().optional()
+});
+
+const ReferralSchema = z.discriminatedUnion('eventType', [SignupEventSchema, PaidEventSchema]);
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -26,11 +44,34 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { referralCode, referredEmail, referredUserId, eventType } = await req.json();
-    logStep("Received request", { referralCode, referredEmail, eventType });
+    // Parse and validate input
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      logStep("Invalid JSON body");
+      return new Response(JSON.stringify({ error: "Invalid request format" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const parseResult = ReferralSchema.safeParse(body);
+    if (!parseResult.success) {
+      logStep("Validation failed", { errors: parseResult.error.flatten() });
+      return new Response(JSON.stringify({ error: "Invalid request parameters" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const validatedData = parseResult.data;
+    logStep("Received request", { eventType: validatedData.eventType });
 
     // Event types: 'signup', 'paid'
-    if (eventType === 'signup') {
+    if (validatedData.eventType === 'signup') {
+      const { referralCode, referredEmail, referredUserId } = validatedData;
+      
       // Find the referrer by their referral code (first 8 chars of user ID)
       const { data: profiles, error: profileError } = await supabaseClient
         .from('profiles')
@@ -71,7 +112,9 @@ serve(async (req) => {
       });
     }
 
-    if (eventType === 'paid') {
+    if (validatedData.eventType === 'paid') {
+      const { referredUserId } = validatedData;
+      
       // Update the referral status to paid
       const { data: referral, error: updateError } = await supabaseClient
         .from('referrals')
@@ -180,8 +223,9 @@ serve(async (req) => {
                 }
               }
             }
-          } catch (stripeError: any) {
-            logStep("Stripe operation failed (reward noted)", { error: stripeError.message });
+          } catch (stripeError: unknown) {
+            const errorMessage = stripeError instanceof Error ? stripeError.message : String(stripeError);
+            logStep("Stripe operation failed (reward noted)", { error: errorMessage });
           }
         }
       }
