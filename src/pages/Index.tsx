@@ -8,92 +8,87 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfileSync } from '@/hooks/useProfileSync';
 import { useLanguage, setStoredLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
+import { checkSubscriptionStatus, isValidSubscription } from '@/services/subscription-service';
 import steadyLogo from '@/assets/steady-logo-new.png';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
-  const { fetchAndSyncProfile } = useProfileSync();
+  const { initializeProfile } = useProfileSync();
   const { setLanguage } = useLanguage();
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [loading, setLoading] = useState(true);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
 
-  const checkSubscriptionStatus = useCallback(async () => {
-    if (!user) return null;
-    
-    setCheckingSubscription(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) {
-        console.error('Subscription check error:', error);
-        return null;
-      }
-      
-      return data;
-    } catch (err) {
-      console.error('Failed to check subscription:', err);
-      return null;
-    } finally {
-      setCheckingSubscription(false);
-    }
-  }, [user]);
-
   useEffect(() => {
     const checkProfile = async () => {
-      // If user is authenticated, try to fetch their profile from database
-      if (user) {
-        const profile = await fetchAndSyncProfile(user.id);
-        
-        // Sync language preference from profile
-        if (profile?.language) {
-          setLanguage(profile.language as 'en' | 'es');
-          setStoredLanguage(profile.language as 'en' | 'es');
-        }
-        
-        if (profile?.onboardingCompleted) {
-          // Check subscription status to ensure payment was completed
-          const subscriptionData = await checkSubscriptionStatus();
-          
-          // Allow access if subscribed, in trial, or has active status
-          const hasValidSubscription = subscriptionData && (
-            subscriptionData.subscribed || 
-            subscriptionData.status === 'trial' || 
-            subscriptionData.status === 'active' ||
-            subscriptionData.status === 'trialing'
-          );
-          
-          if (hasValidSubscription) {
-            // Update local profile with subscription info
-            const localProfile = getUserProfile();
-            if (localProfile) {
-              saveUserProfile({
-                ...localProfile,
-                subscriptionStatus: subscriptionData.status || 'trial',
-              });
-            }
-            setShowOnboarding(false);
-          } else {
-            // User completed onboarding but doesn't have valid subscription
-            // They need to complete payment - show onboarding at payment step
-            setShowOnboarding(true);
-          }
-        }
-      } else {
+      if (!user) {
         // Check local storage for non-authenticated users
         const profile = getUserProfile();
         if (profile?.onboardingCompleted) {
           setShowOnboarding(false);
         }
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        // Use the new initializeProfile that handles missing profiles
+        const result = await initializeProfile(user.id);
+        
+        if (result.error) {
+          console.error('Profile initialization error:', result.error);
+          // On error, show onboarding to allow profile creation
+          setShowOnboarding(true);
+          setLoading(false);
+          return;
+        }
+
+        // Sync language preference from profile
+        if (result.profile?.language) {
+          setLanguage(result.profile.language as 'en' | 'es');
+          setStoredLanguage(result.profile.language as 'en' | 'es');
+        }
+        
+        // If onboarding not completed, show onboarding
+        if (result.needsOnboarding) {
+          setShowOnboarding(true);
+          setLoading(false);
+          return;
+        }
+
+        // Check subscription status
+        setCheckingSubscription(true);
+        const subscriptionResult = await checkSubscriptionStatus();
+        setCheckingSubscription(false);
+        
+        if (subscriptionResult.success && isValidSubscription(subscriptionResult.data)) {
+          // Update local profile with subscription info
+          const localProfile = getUserProfile();
+          if (localProfile && subscriptionResult.data) {
+            saveUserProfile({
+              ...localProfile,
+              subscriptionStatus: subscriptionResult.data.status as 'trial' | 'active' | 'cancelled' | 'expired',
+            });
+          }
+          setShowOnboarding(false);
+        } else {
+          // User completed onboarding but doesn't have valid subscription
+          // They need to complete payment - show onboarding at payment step
+          setShowOnboarding(true);
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        setShowOnboarding(true);
+      } finally {
+        setLoading(false);
+      }
     };
 
     if (!authLoading) {
       checkProfile();
     }
-  }, [user, authLoading, fetchAndSyncProfile, checkSubscriptionStatus]);
+  }, [user, authLoading, initializeProfile, setLanguage]);
 
   // Handle splash screen completion
   const handleSplashComplete = () => {
