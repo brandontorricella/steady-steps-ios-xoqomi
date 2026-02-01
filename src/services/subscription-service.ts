@@ -75,13 +75,20 @@ export async function checkSubscriptionStatus(
       return { success: false, error: error.message };
     }
 
-    const validStatuses = ['trial', 'active', 'trialing', 'subscribed'];
-    const isSubscribed = profile?.subscription_status && 
-      validStatuses.includes(profile.subscription_status);
+    // CRITICAL: Only consider subscribed if they have BOTH:
+    // 1. Active status (active, subscribed) - NOT 'trial' alone
+    // 2. A real Apple product ID (proves actual purchase)
+    const paidStatuses = ['active', 'subscribed'];
+    const hasValidStatus = profile?.subscription_status && paidStatuses.includes(profile.subscription_status);
+    const hasAppleTransaction = profile?.subscription_product_id && 
+      (profile.subscription_product_id === 'com.steadysteps.monthly' || 
+       profile.subscription_product_id === 'com.steadysteps.annual');
+    
+    const isSubscribed = hasValidStatus && hasAppleTransaction;
 
     const status: SubscriptionStatus = {
       subscribed: isSubscribed,
-      status: profile?.subscription_status || 'none',
+      status: isSubscribed ? 'subscribed' : 'none',
       productId: profile?.subscription_product_id || undefined,
       subscriptionEnd: profile?.subscription_end_date || undefined,
     };
@@ -104,15 +111,13 @@ export async function checkSubscriptionStatus(
 
 /**
  * Check if user has valid subscription
+ * CRITICAL: Only 'subscribed' (with Apple transaction) or 'demo' are valid
+ * 'trial' alone does NOT grant access - it's just the default status
  */
 export function isValidSubscription(status?: SubscriptionStatus): boolean {
   if (!status) return false;
-  return status.subscribed || 
-    status.status === 'trial' || 
-    status.status === 'active' || 
-    status.status === 'trialing' ||
-    status.status === 'subscribed' ||
-    status.status === 'demo';
+  // Only actually subscribed users or demo account get access
+  return status.subscribed || status.status === 'demo';
 }
 
 /**
