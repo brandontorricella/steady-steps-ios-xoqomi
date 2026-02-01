@@ -45,7 +45,7 @@ export async function verifyPaymentStatus(userId: string, userEmail?: string): P
 
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('subscription_status, subscription_product_id')
+      .select('subscription_status, subscription_product_id, trial_start_date')
       .eq('id', userId)
       .single();
 
@@ -58,18 +58,28 @@ export async function verifyPaymentStatus(userId: string, userEmail?: string): P
       };
     }
 
-    // Check the subscription status
-    const validStatuses = ['trial', 'active', 'trialing', 'subscribed'];
+    // CRITICAL: Check for REAL subscription with Apple transaction
+    // A valid subscription requires BOTH:
+    // 1. Active status (active, subscribed)
+    // 2. A real Apple product ID (proves they actually purchased)
+    const paidStatuses = ['active', 'subscribed'];
+    const hasValidStatus = profile.subscription_status && paidStatuses.includes(profile.subscription_status);
+    const hasAppleTransaction = profile.subscription_product_id && 
+      (profile.subscription_product_id === 'com.steadysteps.monthly' || 
+       profile.subscription_product_id === 'com.steadysteps.annual');
     
-    if (profile.subscription_status && validStatuses.includes(profile.subscription_status)) {
+    // Only consider paid if they have BOTH valid status AND Apple transaction
+    if (hasValidStatus && hasAppleTransaction) {
       return { 
         isPaid: true, 
         status: 'subscribed',
-        subscriptionType: profile.subscription_product_id || undefined,
+        subscriptionType: profile.subscription_product_id,
         message: 'Subscription verified successfully.'
       };
     }
 
+    // 'trial' status without Apple transaction = unpaid user
+    // This prevents the bug where default 'trial' status auto-grants access
     return { 
       isPaid: false, 
       status: 'none',
