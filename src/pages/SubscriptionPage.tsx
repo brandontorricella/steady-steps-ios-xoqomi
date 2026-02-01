@@ -207,7 +207,7 @@ export const SubscriptionPage = () => {
               {t('subscription.active')}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">$4.99/month</p>
+          <p className="text-sm text-muted-foreground">$5.99/month</p>
         </motion.section>
 
         {/* Plan Change Options */}
@@ -228,10 +228,10 @@ export const SubscriptionPage = () => {
             >
               <div className="text-left">
                 <p className="font-semibold">{language === 'en' ? 'Monthly' : 'Mensual'}</p>
-                <p className="text-sm text-muted-foreground">$4.99/month</p>
+                <p className="text-sm text-muted-foreground">$5.99/month</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-primary font-bold">$4.99</span>
+                <span className="text-primary font-bold">$5.99</span>
                 <Check className="w-5 h-5 text-primary" />
               </div>
             </button>
@@ -246,10 +246,10 @@ export const SubscriptionPage = () => {
               </div>
               <div className="text-left">
                 <p className="font-semibold">{language === 'en' ? 'Annual' : 'Anual'}</p>
-                <p className="text-sm text-muted-foreground">$41.88/year</p>
+                <p className="text-sm text-muted-foreground">$50.29/year</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-bold">$41.88</span>
+                <span className="font-bold">$50.29</span>
                 <Sparkles className="w-5 h-5 text-gold" />
               </div>
             </button>
