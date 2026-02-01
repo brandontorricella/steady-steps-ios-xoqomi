@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Check, Shield, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
+import { Check, Shield, Sparkles, RefreshCw, AlertCircle, Smartphone } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,11 +11,7 @@ import {
   PRODUCT_IDS, 
   verifyPaymentStatus, 
   recordApplePurchase,
-  recordRestoredPurchase 
 } from '@/services/iap-service';
-
-// Dynamically import expo-in-app-purchases (only works in native context)
-let InAppPurchases: typeof import('expo-in-app-purchases') | null = null;
 
 interface PaymentScreenProps {
   onNext: () => void;
@@ -25,107 +20,12 @@ interface PaymentScreenProps {
 export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
   const [isLoading, setIsLoading] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isIAPAvailable, setIsIAPAvailable] = useState(false);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
-
-  // Initialize IAP on mount
-  useEffect(() => {
-    let mounted = true;
-    
-    async function initIAP() {
-      try {
-        // Try to import expo-in-app-purchases
-        const iap = await import('expo-in-app-purchases');
-        InAppPurchases = iap;
-        
-        await InAppPurchases.connectAsync();
-        
-        if (!mounted) return;
-        setIsIAPAvailable(true);
-        
-        // Set up purchase listener
-        InAppPurchases.setPurchaseListener(async ({ responseCode, results }) => {
-          if (!user) return;
-          
-          if (responseCode === InAppPurchases!.IAPResponseCode.OK && results) {
-            for (const purchase of results) {
-              if (!purchase.acknowledged) {
-                // Record purchase in database
-                const transactionId = (purchase as any).transactionId || 
-                  (purchase as any).orderId || 
-                  String(Date.now());
-                const result = await recordApplePurchase(
-                  user.id,
-                  purchase.productId,
-                  transactionId
-                );
-                
-                if (result.success) {
-                  // Finish the transaction
-                  await InAppPurchases!.finishTransactionAsync(purchase, true);
-                  
-                  setSuccessMessage(
-                    language === 'en'
-                      ? 'Purchase successful! Welcome to SteadySteps!'
-                      : '¡Compra exitosa! ¡Bienvenida a SteadySteps!'
-                  );
-                  
-                  setTimeout(() => {
-                    onNext();
-                  }, 1500);
-                } else {
-                  setErrorMessage(
-                    language === 'en'
-                      ? 'Failed to activate subscription. Please try again.'
-                      : 'Error al activar suscripción. Intenta de nuevo.'
-                  );
-                }
-              }
-            }
-          } else if (responseCode === InAppPurchases!.IAPResponseCode.USER_CANCELED) {
-            console.log('User cancelled purchase');
-            setIsLoading(false);
-          } else {
-            setErrorMessage(
-              language === 'en'
-                ? 'Purchase failed. Please try again.'
-                : 'La compra falló. Intenta de nuevo.'
-            );
-            setIsLoading(false);
-          }
-        });
-        
-        // Fetch products from App Store
-        const { results } = await InAppPurchases.getProductsAsync([
-          PRODUCT_IDS.MONTHLY,
-          PRODUCT_IDS.ANNUAL
-        ]);
-        console.log('Available products:', results);
-        
-      } catch (error) {
-        console.log('IAP not available (web browser):', error);
-        if (mounted) {
-          setIsIAPAvailable(false);
-        }
-      }
-    }
-    
-    initIAP();
-    
-    return () => {
-      mounted = false;
-      if (InAppPurchases) {
-        InAppPurchases.disconnectAsync().catch(console.error);
-      }
-    };
-  }, [user, language, onNext]);
 
   // Check payment status on mount (for returning users)
   useEffect(() => {
@@ -175,25 +75,14 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      if (!isIAPAvailable || !InAppPurchases) {
-        // Web fallback - show message about using iOS app
-        setErrorMessage(
-          language === 'en'
-            ? 'In-app purchases are only available in the iOS app. Please download the app from the App Store.'
-            : 'Las compras en la aplicación solo están disponibles en la app de iOS. Por favor descarga la app desde la App Store.'
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      const productId = selectedPlan === 'annual' 
-        ? PRODUCT_IDS.ANNUAL 
-        : PRODUCT_IDS.MONTHLY;
-      
-      // This opens Apple's native payment sheet
-      await InAppPurchases.purchaseItemAsync(productId);
-      
-      // Result is handled by the purchase listener
+      // For PWA/Web: Show message that purchases are only available in iOS app
+      // In native iOS app, this would trigger Apple's payment sheet
+      setErrorMessage(
+        language === 'en'
+          ? 'In-app purchases are only available in the iOS app. Please download SteadySteps from the App Store to subscribe.'
+          : 'Las compras en la aplicación solo están disponibles en la app de iOS. Descarga SteadySteps desde la App Store para suscribirte.'
+      );
+      setIsLoading(false);
       
     } catch (error) {
       console.error('Purchase error:', error);
@@ -207,7 +96,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   };
 
   const handleRestorePurchases = async () => {
-    setIsRestoring(true);
+    setIsVerifying(true);
     setErrorMessage(null);
 
     try {
@@ -217,64 +106,25 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
             ? 'Please log in to restore purchases.'
             : 'Por favor inicia sesión para restaurar compras.'
         );
-        setIsRestoring(false);
+        setIsVerifying(false);
         return;
       }
 
-      if (!isIAPAvailable || !InAppPurchases) {
-        setErrorMessage(
+      // Check database for existing subscription
+      const result = await verifyPaymentStatus(user.id, user.email || undefined);
+
+      if (result.isPaid) {
+        setSuccessMessage(
           language === 'en'
-            ? 'Restore purchases is only available in the iOS app.'
-            : 'Restaurar compras solo está disponible en la app de iOS.'
+            ? 'Subscription restored successfully!'
+            : '¡Suscripción restaurada exitosamente!'
         );
-        setIsRestoring(false);
-        return;
-      }
-
-      const { results } = await InAppPurchases.getPurchaseHistoryAsync();
-
-      if (results && results.length > 0) {
-        const validPurchase = results.find(p => 
-          p.productId === PRODUCT_IDS.MONTHLY || 
-          p.productId === PRODUCT_IDS.ANNUAL
-        );
-
-        if (validPurchase) {
-          const transactionId = (validPurchase as any).transactionId || 
-            (validPurchase as any).orderId || 
-            String(Date.now());
-          const result = await recordRestoredPurchase(
-            user.id,
-            validPurchase.productId,
-            transactionId
-          );
-
-          if (result.success) {
-            setSuccessMessage(
-              language === 'en'
-                ? 'Purchases restored successfully!'
-                : '¡Compras restauradas exitosamente!'
-            );
-            setTimeout(() => onNext(), 1500);
-          } else {
-            setErrorMessage(
-              language === 'en'
-                ? 'Failed to restore purchases. Please contact support.'
-                : 'Error al restaurar compras. Contacta soporte.'
-            );
-          }
-        } else {
-          setErrorMessage(
-            language === 'en'
-              ? 'No active subscription found to restore.'
-              : 'No se encontró suscripción activa para restaurar.'
-          );
-        }
+        setTimeout(() => onNext(), 1500);
       } else {
         setErrorMessage(
           language === 'en'
-            ? 'No previous purchases found.'
-            : 'No se encontraron compras anteriores.'
+            ? 'No active subscription found. To restore purchases made in the iOS app, please open the app on your iPhone.'
+            : 'No se encontró suscripción activa. Para restaurar compras hechas en la app de iOS, abre la app en tu iPhone.'
         );
       }
     } catch (error) {
@@ -285,7 +135,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           : 'No se pudieron restaurar las compras. Intenta de nuevo.'
       );
     } finally {
-      setIsRestoring(false);
+      setIsVerifying(false);
     }
   };
 
@@ -316,8 +166,8 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
       } else {
         setErrorMessage(
           language === 'en'
-            ? 'No payment found. Please complete your purchase to continue.'
-            : 'No se encontró pago. Completa tu compra para continuar.'
+            ? 'No payment found. Please subscribe via the iOS app to continue.'
+            : 'No se encontró pago. Suscríbete a través de la app de iOS para continuar.'
         );
       }
     } catch (error) {
@@ -381,6 +231,26 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           <span className="text-destructive text-sm">{errorMessage}</span>
         </motion.div>
       )}
+
+      {/* iOS App Notice */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3"
+      >
+        <Smartphone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium text-primary">
+            {language === 'en' ? 'Subscribe via iOS App' : 'Suscríbete vía App iOS'}
+          </p>
+          <p className="text-muted-foreground mt-1">
+            {language === 'en' 
+              ? 'Download SteadySteps from the App Store to subscribe with Apple Pay.' 
+              : 'Descarga SteadySteps desde la App Store para suscribirte con Apple Pay.'}
+          </p>
+        </div>
+      </motion.div>
 
       {/* Pricing Options */}
       <motion.div
@@ -466,7 +336,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         <Button
           size="lg"
           onClick={handleStartTrial}
-          disabled={isLoading || isRestoring || isVerifying}
+          disabled={isLoading || isVerifying}
           className="w-full py-6 text-lg font-semibold"
         >
           {isLoading ? (
@@ -487,13 +357,13 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           variant="outline"
           size="lg"
           onClick={handleRestorePurchases}
-          disabled={isLoading || isRestoring || isVerifying}
+          disabled={isLoading || isVerifying}
           className="w-full py-5"
         >
-          {isRestoring ? (
+          {isVerifying ? (
             <>
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
-              {language === 'en' ? 'Restoring...' : 'Restaurando...'}
+              {language === 'en' ? 'Checking...' : 'Verificando...'}
             </>
           ) : (
             <>
@@ -506,17 +376,10 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         {/* Verify Payment - For edge cases */}
         <button
           onClick={handleVerifyPayment}
-          disabled={isLoading || isRestoring || isVerifying}
+          disabled={isLoading || isVerifying}
           className="w-full flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors py-3 text-sm"
         >
-          {isVerifying ? (
-            <>
-              <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              {language === 'en' ? 'Verifying...' : 'Verificando...'}
-            </>
-          ) : (
-            language === 'en' ? "I've Already Paid" : 'Ya He Pagado'
-          )}
+          {language === 'en' ? "I've Already Subscribed" : 'Ya Estoy Suscrita'}
         </button>
 
         <p className="text-center text-xs text-muted-foreground">
