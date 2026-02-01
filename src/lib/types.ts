@@ -388,15 +388,15 @@ export const getMoodMessage = (mood: Mood): string => {
 // Stripe subscription pricing
 export const SUBSCRIPTION_PLANS = {
   monthly: {
-    priceId: 'price_monthly_499', // Will be replaced with actual Stripe price ID
-    amount: 499,
+    priceId: 'com.steadysteps.monthly',
+    amount: 599,
     interval: 'month',
-    label: '$4.99 per month',
+    label: '$5.99 per month',
   },
   annual: {
-    priceId: 'price_annual_2999', // Will be replaced with actual Stripe price ID
-    amount: 2999,
+    priceId: 'com.steadysteps.annual',
+    amount: 5029,
     interval: 'year',
-    label: '$29.99 per year (Save 50%)',
+    label: '$50.29 per year (Save 30%)',
   },
 };
