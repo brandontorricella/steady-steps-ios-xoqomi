@@ -272,7 +272,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
             <p className="text-muted-foreground text-sm">{t('payment.monthlyDesc')}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">$4.99</p>
+            <p className="text-2xl font-bold text-primary">$5.99</p>
             <p className="text-sm text-muted-foreground">{t('payment.perMonth')}</p>
           </div>
           {selectedPlan === 'monthly' && (
@@ -291,14 +291,14 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           }`}
         >
           <div className="absolute -top-2 left-4 px-2 py-0.5 bg-gold text-gold-foreground text-xs font-semibold rounded-full">
-            {language === 'en' ? 'Save 50%' : 'Ahorra 50%'}
+            {language === 'en' ? 'Save 30%' : 'Ahorra 30%'}
           </div>
           <div className="text-left">
             <p className="font-semibold text-lg">{t('payment.annual')}</p>
             <p className="text-muted-foreground text-sm">{t('payment.annualDesc')}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">$29.99</p>
+            <p className="text-2xl font-bold text-primary">$50.29</p>
             <p className="text-sm text-muted-foreground">{t('payment.perYear')}</p>
           </div>
           {selectedPlan === 'annual' && (
