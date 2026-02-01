@@ -57,7 +57,7 @@ const Index = () => {
           return;
         }
 
-        // Check subscription status
+        // Check subscription status from database (Apple IAP)
         setCheckingSubscription(true);
         const subscriptionResult = await checkSubscriptionStatus();
         setCheckingSubscription(false);

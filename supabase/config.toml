@@ -1,14 +1,5 @@
 project_id = "putxlbycbcwtfzhhkmzg"
 
-[functions.create-checkout]
-verify_jwt = false
-
-[functions.check-subscription]
-verify_jwt = false
-
-[functions.customer-portal]
-verify_jwt = false
-
 [functions.ai-coach]
 verify_jwt = false
 
@@ -18,11 +9,11 @@ verify_jwt = false
 [functions.process-referral]
 verify_jwt = false
 
-[functions.cancel-subscription]
-verify_jwt = false
-
 [functions.download-data]
 verify_jwt = false
 
-[functions.update-payment-method]
+[functions.delete-incomplete-signup]
+verify_jwt = false
+
+[functions.send-payment-confirmation]
 verify_jwt = false

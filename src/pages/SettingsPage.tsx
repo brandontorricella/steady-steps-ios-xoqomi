@@ -39,7 +39,6 @@ export const SettingsPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
 
   useEffect(() => {
     setProfile(getUserProfile());
@@ -75,20 +74,25 @@ export const SettingsPage = () => {
   const handleCancelSubscription = async () => {
     setIsCancelling(true);
     try {
-      const { data, error } = await supabase.functions.invoke('cancel-subscription');
+      // For Apple IAP, subscriptions must be cancelled through iOS Settings
+      // Update local status to cancelled
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (error) throw error;
-      
-      if (data?.success) {
-        setCancelStep(2); // Show confirmation page
-      } else if (data?.error) {
-        toast.error(data.error);
-        setShowCancelFlow(false);
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            subscription_status: 'cancelled',
+            subscription_end_date: new Date().toISOString(),
+          })
+          .eq('id', user.id);
       }
+      
+      setCancelStep(2); // Show confirmation page with Apple instructions
     } catch (error) {
       toast.error(language === 'en' 
-        ? 'Failed to cancel subscription. Please contact support.'
-        : 'Error al cancelar suscripción. Por favor contacta soporte.'
+        ? 'Failed to update subscription status. Please try again.'
+        : 'Error al actualizar estado de suscripción. Intenta de nuevo.'
       );
       setShowCancelFlow(false);
     } finally {
@@ -103,26 +107,13 @@ export const SettingsPage = () => {
     navigate('/auth');
   };
 
-  const handleUpdatePaymentMethod = async () => {
-    setIsUpdatingPayment(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('update-payment-method');
-      
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.location.href = data.url;
-      } else if (data?.error) {
-        toast.error(data.error);
-      }
-    } catch (error) {
-      toast.error(language === 'en' 
-        ? 'Failed to open payment update. Please try again.'
-        : 'Error al abrir actualización de pago. Intenta de nuevo.'
-      );
-    } finally {
-      setIsUpdatingPayment(false);
-    }
+  const handleManageSubscription = () => {
+    // For Apple IAP, direct users to iOS Settings
+    toast.info(
+      language === 'en'
+        ? 'To manage your subscription, go to Settings > Apple ID > Subscriptions on your iPhone.'
+        : 'Para gestionar tu suscripción, ve a Ajustes > Apple ID > Suscripciones en tu iPhone.'
+    );
   };
 
   const handleDownloadData = async () => {
@@ -193,16 +184,16 @@ export const SettingsPage = () => {
   const texts = {
     en: {
       subscription: 'Subscription',
-      manageSubscription: 'Update Payment Method',
-      manageSubscriptionDesc: 'Change your card or payment details',
+      manageSubscription: 'Manage Subscription',
+      manageSubscriptionDesc: 'Manage via iPhone Settings > Apple ID > Subscriptions',
       cancelSubscription: 'Cancel Subscription',
       cancelSubscriptionDesc: 'Cancel your SteadySteps subscription',
       cancelConfirmTitle: 'Cancel Subscription?',
-      cancelConfirmDesc: 'Are you sure you want to cancel your subscription? You will lose access to all premium features.',
+      cancelConfirmDesc: 'Are you sure you want to cancel? To fully cancel your subscription, you\'ll also need to go to Settings > Apple ID > Subscriptions on your iPhone.',
       cancelYes: 'Yes, Cancel',
       cancelNo: 'No, Keep Subscription',
       cancelledTitle: 'Subscription Cancelled',
-      cancelledDesc: 'Your subscription has been cancelled and your payment information has been removed. Thank you for using SteadySteps.',
+      cancelledDesc: 'Your subscription has been marked as cancelled. Remember to also cancel in Settings > Apple ID > Subscriptions on your iPhone to stop future charges.',
       returnToLogin: 'Return to Login',
       privacy: 'Privacy',
       downloadData: 'Download My Data',
@@ -220,16 +211,16 @@ export const SettingsPage = () => {
     },
     es: {
       subscription: 'Suscripción',
-      manageSubscription: 'Actualizar Método de Pago',
-      manageSubscriptionDesc: 'Cambiar tu tarjeta o detalles de pago',
+      manageSubscription: 'Gestionar Suscripción',
+      manageSubscriptionDesc: 'Gestionar en Ajustes del iPhone > Apple ID > Suscripciones',
       cancelSubscription: 'Cancelar Suscripción',
       cancelSubscriptionDesc: 'Cancela tu suscripción de SteadySteps',
       cancelConfirmTitle: '¿Cancelar Suscripción?',
-      cancelConfirmDesc: '¿Estás segura de que quieres cancelar tu suscripción? Perderás acceso a todas las funciones premium.',
+      cancelConfirmDesc: '¿Estás segura de que quieres cancelar? Para cancelar completamente, también necesitas ir a Ajustes > Apple ID > Suscripciones en tu iPhone.',
       cancelYes: 'Sí, Cancelar',
       cancelNo: 'No, Mantener Suscripción',
       cancelledTitle: 'Suscripción Cancelada',
-      cancelledDesc: 'Tu suscripción ha sido cancelada y tu información de pago ha sido eliminada. Gracias por usar SteadySteps.',
+      cancelledDesc: 'Tu suscripción ha sido marcada como cancelada. Recuerda también cancelar en Ajustes > Apple ID > Suscripciones en tu iPhone para detener futuros cargos.',
       returnToLogin: 'Volver al Inicio de Sesión',
       privacy: 'Privacidad',
       downloadData: 'Descargar Mis Datos',
@@ -448,9 +439,8 @@ export const SettingsPage = () => {
           
           <div className="space-y-2">
             <button 
-              onClick={handleUpdatePaymentMethod}
-              disabled={isUpdatingPayment}
-              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors disabled:opacity-50"
+              onClick={handleManageSubscription}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
             >
               <CreditCard className="w-5 h-5 text-muted-foreground" />
               <div className="text-left flex-1">

@@ -1,12 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
+import { verifyPaymentStatus as verifyIAPPayment, isValidSubscription as isValidIAPSubscription } from './iap-service';
 
 // =====================================================
 // SUBSCRIPTION SERVICE - Handles subscription operations
+// Now uses Apple In-App Purchases instead of Stripe
 // =====================================================
 
 export interface SubscriptionStatus {
   subscribed: boolean;
-  status: 'trial' | 'active' | 'trialing' | 'canceled' | 'none' | string;
+  status: 'trial' | 'active' | 'trialing' | 'canceled' | 'none' | 'demo' | string;
   productId?: string;
   subscriptionEnd?: string;
 }
@@ -25,8 +27,12 @@ let subscriptionCache: {
 
 const CACHE_DURATION = 60 * 1000; // 1 minute
 
+// Demo account for Apple App Review
+const DEMO_EMAIL = 'demo@steadystepsapp.com';
+
 /**
- * Check subscription status via edge function
+ * Check subscription status from database
+ * This replaces the old Stripe-based check
  */
 export async function checkSubscriptionStatus(
   forceRefresh: boolean = false
@@ -40,24 +46,50 @@ export async function checkSubscriptionStatus(
       }
     }
 
-    const { data, error } = await supabase.functions.invoke('check-subscription');
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { success: false, error: 'No user found' };
+    }
+
+    // Demo account bypass for Apple App Review
+    if (user.email === DEMO_EMAIL) {
+      const demoStatus: SubscriptionStatus = {
+        subscribed: true,
+        status: 'demo',
+      };
+      subscriptionCache = { data: demoStatus, timestamp: Date.now() };
+      return { success: true, data: demoStatus };
+    }
+
+    // Check database for subscription status
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('subscription_status, subscription_product_id, subscription_end_date')
+      .eq('id', user.id)
+      .single();
 
     if (error) {
       console.error('Subscription check error:', error);
       return { success: false, error: error.message };
     }
 
+    const validStatuses = ['trial', 'active', 'trialing', 'subscribed'];
+    const isSubscribed = profile?.subscription_status && 
+      validStatuses.includes(profile.subscription_status);
+
     const status: SubscriptionStatus = {
-      subscribed: data?.subscribed ?? false,
-      status: data?.status || 'none',
-      productId: data?.productId,
-      subscriptionEnd: data?.subscriptionEnd
+      subscribed: isSubscribed,
+      status: profile?.subscription_status || 'none',
+      productId: profile?.subscription_product_id || undefined,
+      subscriptionEnd: profile?.subscription_end_date || undefined,
     };
 
     // Update cache
     subscriptionCache = {
       data: status,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     return { success: true, data: status };
@@ -78,86 +110,37 @@ export function isValidSubscription(status?: SubscriptionStatus): boolean {
   return status.subscribed || 
     status.status === 'trial' || 
     status.status === 'active' || 
-    status.status === 'trialing';
+    status.status === 'trialing' ||
+    status.status === 'subscribed' ||
+    status.status === 'demo';
 }
 
 /**
- * Clear subscription cache (call after payment or cancellation)
+ * Clear subscription cache (call after purchase or cancellation)
  */
 export function clearSubscriptionCache(): void {
   subscriptionCache = null;
 }
 
 /**
- * Create checkout session for subscription
- */
-export async function createCheckoutSession(
-  priceId: string,
-  successUrl?: string,
-  cancelUrl?: string
-): Promise<{ success: boolean; url?: string; error?: string }> {
-  try {
-    const origin = window.location.origin;
-    
-    const { data, error } = await supabase.functions.invoke('create-checkout', {
-      body: {
-        priceId,
-        successUrl: successUrl || `${origin}/profile-setup?payment=success`,
-        cancelUrl: cancelUrl || `${origin}/profile-setup?payment=cancel`
-      }
-    });
-
-    if (error) {
-      console.error('Checkout creation error:', error);
-      return { success: false, error: error.message };
-    }
-
-    if (!data?.url) {
-      return { success: false, error: 'No checkout URL returned' };
-    }
-
-    return { success: true, url: data.url };
-  } catch (error) {
-    console.error('Checkout creation failed:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
-  }
-}
-
-/**
- * Open customer portal for subscription management
- */
-export async function openCustomerPortal(): Promise<{ success: boolean; url?: string; error?: string }> {
-  try {
-    const { data, error } = await supabase.functions.invoke('customer-portal');
-
-    if (error) {
-      console.error('Customer portal error:', error);
-      return { success: false, error: error.message };
-    }
-
-    if (!data?.url) {
-      return { success: false, error: 'No portal URL returned' };
-    }
-
-    return { success: true, url: data.url };
-  } catch (error) {
-    console.error('Customer portal failed:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
-  }
-}
-
-/**
- * Cancel subscription
+ * Cancel subscription - updates local database
+ * For Apple subscriptions, users manage through Settings > Subscriptions
  */
 export async function cancelSubscription(): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase.functions.invoke('cancel-subscription');
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { success: false, error: 'No user found' };
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_status: 'cancelled',
+        subscription_end_date: new Date().toISOString(),
+      })
+      .eq('id', user.id);
 
     if (error) {
       console.error('Cancel subscription error:', error);
@@ -176,3 +159,6 @@ export async function cancelSubscription(): Promise<{ success: boolean; error?: 
     };
   }
 }
+
+// Re-export IAP functions for convenience
+export { verifyIAPPayment as verifyPaymentStatus, isValidIAPSubscription };

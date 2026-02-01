@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, RefreshCw, CreditCard, Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Check, RefreshCw, Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from 'sonner';
 import { clearUserProfile } from '@/lib/storage';
+import { verifyPaymentStatus } from '@/services/iap-service';
 
 type PaymentStatus = 'pending' | 'paid' | 'verifying' | 'cancelling';
 
@@ -21,92 +22,38 @@ const ProfileSetupPage = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
 
-  // Detect payment status from URL
+  // Check payment status on mount
   useEffect(() => {
-    const paymentParam = searchParams.get('payment');
-    
-    if (paymentParam === 'success') {
-      setPaymentStatus('verifying');
-      verifyPaymentWithStripe(false); // Don't show error notification on success redirect
-    } else if (paymentParam === 'cancel') {
-      setPaymentStatus('pending');
-      toast.info(
-        language === 'en' 
-          ? 'Payment was cancelled. You can try again when ready.' 
-          : 'El pago fue cancelado. Puedes intentarlo cuando estés lista.'
-      );
+    if (user) {
+      checkPaymentStatus();
     }
-  }, [searchParams, language]);
+  }, [user]);
 
-  // Verify payment with Stripe API
-  const verifyPaymentWithStripe = useCallback(async (showNotifications = true) => {
+  // Verify payment status from database (Apple IAP)
+  const checkPaymentStatus = useCallback(async () => {
+    if (!user) return;
+    
     setIsVerifying(true);
     try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
+      const result = await verifyPaymentStatus(user.id, user.email || undefined);
       
-      if (error) {
-        console.error('Subscription check error:', error);
-        if (showNotifications) {
-          // Show payment unsuccessful and trigger reset
-          toast.error(
-            language === 'en' 
-              ? '❌ Payment Unsuccessful. Please try again.' 
-              : '❌ Pago no exitoso. Por favor intenta de nuevo.'
-          );
-        }
-        setPaymentStatus('pending');
-        return false;
-      }
-      
-      const hasValidSubscription = data && (
-        data.subscribed || 
-        data.status === 'active' || 
-        data.status === 'trialing'
-      );
-      
-      if (hasValidSubscription) {
+      if (result.isPaid) {
         setPaymentStatus('paid');
-        
-        // Send payment confirmation email
-        try {
-          await supabase.functions.invoke('send-payment-confirmation');
-        } catch (emailError) {
-          console.error('Failed to send confirmation email:', emailError);
-          // Don't block the flow if email fails
-        }
-        
         toast.success(
           language === 'en' 
-            ? '✅ Payment received! You can now finish your profile.' 
-            : '✅ ¡Pago recibido! Ahora puedes completar tu perfil.'
+            ? '✅ Subscription verified! You can now finish your profile.' 
+            : '✅ ¡Suscripción verificada! Ahora puedes completar tu perfil.'
         );
-        return true;
       } else {
         setPaymentStatus('pending');
-        if (showNotifications) {
-          toast.error(
-            language === 'en' 
-              ? '❌ Payment Unsuccessful. No active subscription found.' 
-              : '❌ Pago no exitoso. No se encontró suscripción activa.'
-          );
-        }
-        return false;
       }
     } catch (err) {
       console.error('Failed to verify payment:', err);
       setPaymentStatus('pending');
-      if (showNotifications) {
-        toast.error(
-          language === 'en' 
-            ? '❌ Payment Unsuccessful. Please try again.' 
-            : '❌ Pago no exitoso. Por favor intenta de nuevo.'
-        );
-      }
-      return false;
     } finally {
       setIsVerifying(false);
     }
-  }, [language]);
+  }, [user, language]);
 
   // Handle cancel and delete user data
   const handleCancelAndGoBack = async () => {
@@ -141,36 +88,44 @@ const ProfileSetupPage = () => {
     }
   };
 
-  // Handle retry payment
-  const handleRetryPayment = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { isAnnual: false },
-      });
-
-      if (error) throw error;
-      if (data?.url) {
-        const checkoutUrl = data.url.startsWith('https://') ? data.url : data.url.replace('http://', 'https://');
-        
-        // Detect iOS
-        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
-        const isWebView = isIOS && !/Safari/.test(navigator.userAgent || '');
-        const isStandalone = (window.navigator as any).standalone === true;
-        
-        if (isIOS && (isWebView || isStandalone)) {
-          // iOS: Open in Safari
-          window.location.href = checkoutUrl;
-        } else {
-          window.open(checkoutUrl, '_blank');
-        }
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
+  // Handle verify payment button click
+  const handleVerifyPayment = async () => {
+    if (!user) {
       toast.error(
         language === 'en' 
-          ? 'Unable to start checkout. Please try again.' 
-          : 'No se pudo iniciar el pago. Intenta de nuevo.'
+          ? 'Please log in to continue.' 
+          : 'Por favor inicia sesión para continuar.'
       );
+      return;
+    }
+    
+    setIsVerifying(true);
+    try {
+      const result = await verifyPaymentStatus(user.id, user.email || undefined);
+      
+      if (result.isPaid) {
+        setPaymentStatus('paid');
+        toast.success(
+          language === 'en' 
+            ? '✅ Subscription verified!' 
+            : '✅ ¡Suscripción verificada!'
+        );
+      } else {
+        toast.error(
+          language === 'en' 
+            ? '❌ No active subscription found. Please complete your purchase.' 
+            : '❌ No se encontró suscripción activa. Por favor completa tu compra.'
+        );
+      }
+    } catch (err) {
+      console.error('Failed to verify payment:', err);
+      toast.error(
+        language === 'en' 
+          ? '❌ Unable to verify payment. Please try again.' 
+          : '❌ No se pudo verificar el pago. Intenta de nuevo.'
+      );
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -208,6 +163,11 @@ const ProfileSetupPage = () => {
     }
   };
 
+  // Navigate back to payment screen in onboarding
+  const handleGoToPayment = () => {
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen gradient-soft flex flex-col items-center justify-center px-6 py-12">
       <motion.div
@@ -240,30 +200,30 @@ const ProfileSetupPage = () => {
         <div>
           <h1 className="text-3xl font-heading font-bold mb-2">
             {paymentStatus === 'paid' 
-              ? (language === 'en' ? 'Payment Successful!' : '¡Pago Exitoso!')
+              ? (language === 'en' ? 'Subscription Active!' : '¡Suscripción Activa!')
               : paymentStatus === 'verifying'
-              ? (language === 'en' ? 'Verifying Payment...' : 'Verificando Pago...')
+              ? (language === 'en' ? 'Verifying...' : 'Verificando...')
               : paymentStatus === 'cancelling'
               ? (language === 'en' ? 'Cancelling...' : 'Cancelando...')
-              : (language === 'en' ? 'Complete Your Payment' : 'Completa Tu Pago')
+              : (language === 'en' ? 'Complete Your Purchase' : 'Completa Tu Compra')
             }
           </h1>
           <p className="text-muted-foreground">
             {paymentStatus === 'paid'
               ? (language === 'en' 
-                  ? '✅ Payment received! You can now finish your profile.' 
-                  : '✅ ¡Pago recibido! Ahora puedes completar tu perfil.')
+                  ? '✅ Your subscription is active! Finish setting up your profile.' 
+                  : '✅ ¡Tu suscripción está activa! Termina de configurar tu perfil.')
               : paymentStatus === 'verifying'
               ? (language === 'en' 
-                  ? 'Please wait while we verify your payment...' 
-                  : 'Por favor espera mientras verificamos tu pago...')
+                  ? 'Please wait while we verify your subscription...' 
+                  : 'Por favor espera mientras verificamos tu suscripción...')
               : paymentStatus === 'cancelling'
               ? (language === 'en' 
                   ? 'Cleaning up your account...' 
                   : 'Limpiando tu cuenta...')
               : (language === 'en' 
-                  ? 'Please complete payment to finish your profile.' 
-                  : 'Por favor completa el pago para terminar tu perfil.')
+                  ? 'Please complete your purchase to access SteadySteps.' 
+                  : 'Por favor completa tu compra para acceder a SteadySteps.')
             }
           </p>
         </div>
@@ -305,25 +265,17 @@ const ProfileSetupPage = () => {
             <>
               <Button
                 size="lg"
-                onClick={handleRetryPayment}
+                onClick={handleGoToPayment}
                 className="w-full py-6 text-lg font-semibold"
               >
-                <CreditCard className="w-5 h-5 mr-2" />
-                {language === 'en' ? 'Complete Payment' : 'Completar Pago'}
+                <Sparkles className="w-5 h-5 mr-2" />
+                {language === 'en' ? 'Go to Payment' : 'Ir al Pago'}
               </Button>
               
               <Button
                 variant="outline"
                 size="lg"
-                onClick={async () => {
-                  const success = await verifyPaymentWithStripe(true);
-                  if (success) {
-                    // Payment verified - proceed to complete profile
-                    setPaymentStatus('paid');
-                  }
-                  // If verification fails, stay on page - error toast already shown
-                  // Do NOT reset or delete user data - they just haven't paid yet
-                }}
+                onClick={handleVerifyPayment}
                 disabled={isVerifying}
                 className="w-full py-5"
               >
