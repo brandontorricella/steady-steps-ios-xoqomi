@@ -7,11 +7,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  PRODUCT_IDS, 
-  verifyPaymentStatus, 
-  recordApplePurchase,
-} from '@/services/iap-service';
+import { Capacitor } from '@capacitor/core';
+import {
+  configureRevenueCat,
+  getOfferings,
+  purchasePackage,
+  restorePurchases,
+  checkPremiumStatus,
+  recordPurchaseInDatabase,
+  isRevenueCatAvailable,
+  PRODUCT_IDS,
+  RevenueCatOffering,
+  RevenueCatPackage,
+} from '@/services/revenuecat-service';
 
 interface PaymentScreenProps {
   onNext: () => void;
@@ -23,30 +31,77 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [offerings, setOfferings] = useState<RevenueCatOffering | null>(null);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
 
-  // Check payment status on mount (for returning users)
-  useEffect(() => {
-    if (user) {
-      checkExistingPayment();
-    }
-  }, [user]);
+  const isNative = Capacitor.isNativePlatform();
 
-  const checkExistingPayment = async () => {
-    if (!user) return;
-    
-    const result = await verifyPaymentStatus(user.id, user.email || undefined);
-    if (result.isPaid) {
-      setSuccessMessage(
-        language === 'en'
-          ? 'Subscription verified! Redirecting...'
-          : '¡Suscripción verificada! Redirigiendo...'
-      );
-      setTimeout(() => onNext(), 1500);
+  // Initialize RevenueCat and check existing subscription
+  useEffect(() => {
+    let isMounted = true;
+
+    async function initialize() {
+      if (!user) {
+        setIsInitializing(false);
+        return;
+      }
+
+      try {
+        console.log('=== INITIALIZING PAYMENT SCREEN ===');
+        console.log('Platform:', Capacitor.getPlatform());
+        console.log('Is native:', isNative);
+
+        // Check existing subscription first
+        const premiumStatus = await checkPremiumStatus(user.id, user.email || undefined);
+        
+        if (premiumStatus.isPremium) {
+          console.log('User already has premium access via:', premiumStatus.source);
+          if (isMounted) {
+            setSuccessMessage(
+              language === 'en'
+                ? 'Subscription verified! Redirecting...'
+                : '¡Suscripción verificada! Redirigiendo...'
+            );
+            setTimeout(() => onNext(), 1500);
+          }
+          return;
+        }
+
+        // Configure RevenueCat if on native platform
+        if (isNative) {
+          const configured = await configureRevenueCat(user.id);
+          
+          if (configured && isMounted) {
+            // Fetch offerings
+            const fetchedOfferings = await getOfferings();
+            console.log('Fetched offerings:', fetchedOfferings);
+            
+            if (fetchedOfferings) {
+              setOfferings(fetchedOfferings);
+            }
+          }
+        }
+
+        if (isMounted) {
+          setIsInitializing(false);
+        }
+      } catch (error) {
+        console.error('Initialization error:', error);
+        if (isMounted) {
+          setIsInitializing(false);
+        }
+      }
     }
-  };
+
+    initialize();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, isNative, language, onNext]);
 
   const handleStartTrial = async () => {
     setIsLoading(true);
@@ -63,9 +118,9 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      // Check if already paid
-      const verifyResult = await verifyPaymentStatus(user.id, user.email || undefined);
-      if (verifyResult.isPaid) {
+      // Check if already has premium
+      const premiumStatus = await checkPremiumStatus(user.id, user.email || undefined);
+      if (premiumStatus.isPremium) {
         setSuccessMessage(
           language === 'en'
             ? 'You already have an active subscription!'
@@ -75,8 +130,69 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      // For PWA/Web: Show message that purchases are only available in iOS app
-      // In native iOS app, this would trigger Apple's payment sheet
+      // Handle native platform purchase
+      if (isNative && offerings?.availablePackages) {
+        // Find the right package
+        const packageToPurchase = offerings.availablePackages.find(pkg => {
+          if (selectedPlan === 'annual') {
+            return pkg.packageType === 'ANNUAL' || 
+                   pkg.identifier === '$rc_annual' || 
+                   pkg.identifier === 'annual' ||
+                   pkg.product.identifier === PRODUCT_IDS.ANNUAL;
+          } else {
+            return pkg.packageType === 'MONTHLY' || 
+                   pkg.identifier === '$rc_monthly' || 
+                   pkg.identifier === 'monthly' ||
+                   pkg.product.identifier === PRODUCT_IDS.MONTHLY;
+          }
+        });
+
+        if (!packageToPurchase) {
+          console.error('Package not found. Available packages:', offerings.availablePackages);
+          setErrorMessage(
+            language === 'en'
+              ? 'Subscription package not found. Please try again.'
+              : 'Paquete de suscripción no encontrado. Intenta de nuevo.'
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('Purchasing package:', packageToPurchase);
+        
+        const result = await purchasePackage(packageToPurchase);
+
+        if (result.success && result.customerInfo) {
+          // Record in database
+          await recordPurchaseInDatabase(
+            user.id,
+            selectedPlan === 'annual' ? PRODUCT_IDS.ANNUAL : PRODUCT_IDS.MONTHLY,
+            result.customerInfo.originalAppUserId
+          );
+
+          setSuccessMessage(
+            language === 'en'
+              ? 'Purchase successful! Redirecting...'
+              : '¡Compra exitosa! Redirigiendo...'
+          );
+          setTimeout(() => onNext(), 1500);
+          return;
+        } else if (result.cancelled) {
+          // User cancelled - just reset loading state
+          setIsLoading(false);
+          return;
+        } else {
+          setErrorMessage(result.error || (
+            language === 'en'
+              ? 'Purchase failed. Please try again.'
+              : 'La compra falló. Intenta de nuevo.'
+          ));
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Web platform - show message to use iOS app
       setErrorMessage(
         language === 'en'
           ? 'In-app purchases are only available in the iOS app. Please download SteadySteps from the App Store to subscribe.'
@@ -110,22 +226,49 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      // Check database for existing subscription
-      const result = await verifyPaymentStatus(user.id, user.email || undefined);
+      if (isNative) {
+        // Use RevenueCat restore
+        const result = await restorePurchases();
+        
+        if (result.success && result.customerInfo) {
+          await recordPurchaseInDatabase(
+            user.id,
+            result.customerInfo.entitlements.active.premium?.identifier || PRODUCT_IDS.MONTHLY,
+            result.customerInfo.originalAppUserId
+          );
 
-      if (result.isPaid) {
-        setSuccessMessage(
-          language === 'en'
-            ? 'Subscription restored successfully!'
-            : '¡Suscripción restaurada exitosamente!'
-        );
-        setTimeout(() => onNext(), 1500);
+          setSuccessMessage(
+            language === 'en'
+              ? 'Subscription restored successfully!'
+              : '¡Suscripción restaurada exitosamente!'
+          );
+          setTimeout(() => onNext(), 1500);
+          return;
+        } else {
+          setErrorMessage(result.error || (
+            language === 'en'
+              ? 'No active subscription found.'
+              : 'No se encontró suscripción activa.'
+          ));
+        }
       } else {
-        setErrorMessage(
-          language === 'en'
-            ? 'No active subscription found. To restore purchases made in the iOS app, please open the app on your iPhone.'
-            : 'No se encontró suscripción activa. Para restaurar compras hechas en la app de iOS, abre la app en tu iPhone.'
-        );
+        // Web platform - check database
+        const premiumStatus = await checkPremiumStatus(user.id, user.email || undefined);
+
+        if (premiumStatus.isPremium) {
+          setSuccessMessage(
+            language === 'en'
+              ? 'Subscription restored successfully!'
+              : '¡Suscripción restaurada exitosamente!'
+          );
+          setTimeout(() => onNext(), 1500);
+        } else {
+          setErrorMessage(
+            language === 'en'
+              ? 'No active subscription found. To restore purchases made in the iOS app, please open the app on your iPhone.'
+              : 'No se encontró suscripción activa. Para restaurar compras hechas en la app de iOS, abre la app en tu iPhone.'
+          );
+        }
       }
     } catch (error) {
       console.error('Restore error:', error);
@@ -154,9 +297,9 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      const result = await verifyPaymentStatus(user.id, user.email || undefined);
+      const premiumStatus = await checkPremiumStatus(user.id, user.email || undefined);
 
-      if (result.isPaid) {
+      if (premiumStatus.isPremium) {
         setSuccessMessage(
           language === 'en'
             ? 'Payment verified! Redirecting...'
@@ -188,6 +331,44 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
     t('payment.features.progress'),
     t('payment.features.reminders'),
   ];
+
+  // Get prices from RevenueCat offerings or use defaults
+  let monthlyPrice = '$5.99';
+  let annualPrice = '$49.99';
+
+  if (offerings?.availablePackages) {
+    const monthlyPkg = offerings.availablePackages.find(pkg => 
+      pkg.packageType === 'MONTHLY' || 
+      pkg.identifier === '$rc_monthly' || 
+      pkg.identifier === 'monthly' ||
+      pkg.product.identifier === PRODUCT_IDS.MONTHLY
+    );
+    const annualPkg = offerings.availablePackages.find(pkg => 
+      pkg.packageType === 'ANNUAL' || 
+      pkg.identifier === '$rc_annual' || 
+      pkg.identifier === 'annual' ||
+      pkg.product.identifier === PRODUCT_IDS.ANNUAL
+    );
+    
+    if (monthlyPkg?.product?.priceString) {
+      monthlyPrice = monthlyPkg.product.priceString;
+    }
+    if (annualPkg?.product?.priceString) {
+      annualPrice = annualPkg.product.priceString;
+    }
+  }
+
+  // Show loading while initializing
+  if (isInitializing) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-muted-foreground">
+          {language === 'en' ? 'Loading payment options...' : 'Cargando opciones de pago...'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col px-6 py-12 overflow-auto">
@@ -232,25 +413,27 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         </motion.div>
       )}
 
-      {/* iOS App Notice */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3"
-      >
-        <Smartphone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <p className="font-medium text-primary">
-            {language === 'en' ? 'Subscribe via iOS App' : 'Suscríbete vía App iOS'}
-          </p>
-          <p className="text-muted-foreground mt-1">
-            {language === 'en' 
-              ? 'Download SteadySteps from the App Store to subscribe with Apple Pay.' 
-              : 'Descarga SteadySteps desde la App Store para suscribirte con Apple Pay.'}
-          </p>
-        </div>
-      </motion.div>
+      {/* iOS App Notice - Only show on web */}
+      {!isNative && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3"
+        >
+          <Smartphone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-primary">
+              {language === 'en' ? 'Subscribe via iOS App' : 'Suscríbete vía App iOS'}
+            </p>
+            <p className="text-muted-foreground mt-1">
+              {language === 'en' 
+                ? 'Download SteadySteps from the App Store to subscribe with Apple Pay.' 
+                : 'Descarga SteadySteps desde la App Store para suscribirte con Apple Pay.'}
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Pricing Options */}
       <motion.div
@@ -272,7 +455,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
             <p className="text-muted-foreground text-sm">{t('payment.monthlyDesc')}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">$5.99</p>
+            <p className="text-2xl font-bold text-primary">{monthlyPrice}</p>
             <p className="text-sm text-muted-foreground">{t('payment.perMonth')}</p>
           </div>
           {selectedPlan === 'monthly' && (
@@ -298,7 +481,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
             <p className="text-muted-foreground text-sm">{t('payment.annualDesc')}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">$50.29</p>
+            <p className="text-2xl font-bold text-primary">{annualPrice}</p>
             <p className="text-sm text-muted-foreground">{t('payment.perYear')}</p>
           </div>
           {selectedPlan === 'annual' && (

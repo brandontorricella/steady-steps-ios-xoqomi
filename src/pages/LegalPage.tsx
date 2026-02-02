@@ -51,7 +51,7 @@ SteadySteps offers subscription plans to access premium features.
 
 Subscription Options:
 - Monthly subscription: $5.99 USD per month
-- Annual subscription: $50.29 USD per year (30% savings)
+- Annual subscription: $49.99 USD per year (30% savings)
 
 Free Trial:
 New users receive a 7-day free trial. A valid payment method is required to start the trial. You will not be charged during the trial period. If you do not cancel before the trial ends, your subscription will automatically begin and your payment method will be charged.

@@ -246,10 +246,10 @@ export const SubscriptionPage = () => {
               </div>
               <div className="text-left">
                 <p className="font-semibold">{language === 'en' ? 'Annual' : 'Anual'}</p>
-                <p className="text-sm text-muted-foreground">$50.29/year</p>
+                <p className="text-sm text-muted-foreground">$49.99/year</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-bold">$50.29</span>
+                <span className="font-bold">$49.99</span>
                 <Sparkles className="w-5 h-5 text-gold" />
               </div>
             </button>
