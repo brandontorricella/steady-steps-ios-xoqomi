@@ -395,8 +395,8 @@ export const SUBSCRIPTION_PLANS = {
   },
   annual: {
     priceId: 'com.steadysteps.annual',
-    amount: 5029,
+    amount: 4999,
     interval: 'year',
-    label: '$50.29 per year (Save 30%)',
+    label: '$49.99 per year (Save 30%)',
   },
 };
