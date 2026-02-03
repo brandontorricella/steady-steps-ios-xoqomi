@@ -108,12 +108,7 @@ export const SettingsPage = () => {
   };
 
   const handleManageSubscription = () => {
-    // For Apple IAP, direct users to iOS Settings
-    toast.info(
-      language === 'en'
-        ? 'To manage your subscription, go to Settings > Apple ID > Subscriptions on your iPhone.'
-        : 'Para gestionar tu suscripción, ve a Ajustes > Apple ID > Suscripciones en tu iPhone.'
-    );
+    navigate('/subscription');
   };
 
   const handleDownloadData = async () => {
