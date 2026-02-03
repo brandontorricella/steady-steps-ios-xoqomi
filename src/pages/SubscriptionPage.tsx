@@ -1,12 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, Check, AlertTriangle, Sparkles } from 'lucide-react';
+import { ArrowLeft, CreditCard, Check, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
+import { Capacitor } from '@capacitor/core';
+import {
+  isRevenueCatAvailable,
+  configureRevenueCat,
+  getOfferings,
+  purchasePackage,
+  PRODUCT_IDS,
+  ENTITLEMENT_ID,
+  RevenueCatPackage,
+  RevenueCatOffering,
+} from '@/services/revenuecat-service';
 
 export const SubscriptionPage = () => {
   const navigate = useNavigate();
@@ -16,62 +27,148 @@ export const SubscriptionPage = () => {
   const [cancelConfirmed, setCancelConfirmed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [offerings, setOfferings] = useState<RevenueCatOffering | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<'monthly' | 'annual'>('monthly');
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleManageSubscription = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
-      if (error) throw error;
-      if (data?.url) window.open(data.url, '_blank');
-    } catch (error) {
-      toast.error('Unable to open subscription management');
+  // Initialize RevenueCat and fetch current subscription info
+  useEffect(() => {
+    async function initialize() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        setUserId(user.id);
+
+        // Check current plan from database
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('subscription_product_id')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.subscription_product_id === PRODUCT_IDS.ANNUAL) {
+          setCurrentPlan('annual');
+        }
+
+        // Configure RevenueCat if on native platform
+        if (isRevenueCatAvailable()) {
+          await configureRevenueCat(user.id);
+          const offeringsResult = await getOfferings();
+          if (offeringsResult) {
+            setOfferings(offeringsResult);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing subscription page:', error);
+      }
     }
-  };
 
-  // Handle plan change - opens Stripe checkout with the new plan
+    initialize();
+  }, []);
+
+  // Handle plan change via RevenueCat (Apple IAP)
   const handleChangePlan = async (isAnnual: boolean) => {
+    if (!isRevenueCatAvailable()) {
+      toast.info(
+        language === 'en'
+          ? 'Plan changes are only available in the iOS app. Go to Settings > Apple ID > Subscriptions.'
+          : 'Los cambios de plan solo están disponibles en la app iOS. Ve a Ajustes > Apple ID > Suscripciones.'
+      );
+      return;
+    }
+
     setIsChangingPlan(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { isAnnual },
-      });
+      // Find the package to purchase
+      const targetProductId = isAnnual ? PRODUCT_IDS.ANNUAL : PRODUCT_IDS.MONTHLY;
+      
+      let packageToPurchase: RevenueCatPackage | undefined;
+      
+      if (offerings?.availablePackages) {
+        packageToPurchase = offerings.availablePackages.find(pkg => 
+          pkg.product.identifier === targetProductId ||
+          pkg.identifier === (isAnnual ? '$rc_annual' : '$rc_monthly')
+        );
+      }
 
-      if (error) throw error;
-      if (data?.url) {
-        const checkoutUrl = data.url.startsWith('https://') ? data.url : data.url.replace('http://', 'https://');
-        
-        // Detect iOS WebView/PWA
-        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
-        const isWebView = isIOS && !/Safari/.test(navigator.userAgent || '');
-        const isStandalone = (window.navigator as any).standalone === true;
-        
-        if (isIOS && (isWebView || isStandalone)) {
-          window.location.href = checkoutUrl;
-        } else {
-          window.open(checkoutUrl, '_blank');
-        }
+      if (!packageToPurchase) {
+        throw new Error('Package not found');
+      }
+
+      const result = await purchasePackage(packageToPurchase);
+
+      if (result.success && userId) {
+        // Update database with new plan
+        await supabase
+          .from('profiles')
+          .update({
+            subscription_status: 'active',
+            subscription_product_id: targetProductId,
+          })
+          .eq('id', userId);
+
+        toast.success(
+          language === 'en' 
+            ? 'Plan updated successfully!' 
+            : '¡Plan actualizado exitosamente!'
+        );
+        setCurrentPlan(isAnnual ? 'annual' : 'monthly');
+      } else if (result.cancelled) {
+        // User cancelled - do nothing
+      } else if (result.error) {
+        toast.error(result.error);
       }
     } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error(language === 'en' ? 'Unable to start checkout' : 'No se pudo iniciar el pago');
+      console.error('Plan change error:', error);
+      toast.error(
+        language === 'en' 
+          ? 'Unable to change plan. Please try again.' 
+          : 'No se pudo cambiar el plan. Intenta de nuevo.'
+      );
     } finally {
       setIsChangingPlan(false);
     }
   };
 
+  // Handle update payment method - directs to iOS Settings for Apple IAP
+  const handleUpdatePaymentMethod = () => {
+    toast.info(
+      language === 'en'
+        ? 'To update your payment method, go to Settings > Apple ID > Payment & Shipping on your iPhone.'
+        : 'Para actualizar tu método de pago, ve a Ajustes > Apple ID > Pago y Envío en tu iPhone.'
+    );
+  };
+
+  // Handle cancel subscription - clears Apple Pay info and marks as cancelled
   const handleCancelSubscription = async () => {
     if (!cancelConfirmed) return;
     
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, '_blank');
-        toast.success(t('subscription.cancelComplete'));
-        setShowCancelFlow(false);
-        setCancelStep(1);
-        setCancelConfirmed(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Clear subscription info to prevent future charges
+        await supabase
+          .from('profiles')
+          .update({
+            subscription_status: 'cancelled',
+            subscription_product_id: null,
+            subscription_end_date: new Date().toISOString(),
+          })
+          .eq('id', user.id);
       }
+
+      toast.success(
+        language === 'en'
+          ? 'Subscription cancelled. Remember to also cancel in Settings > Apple ID > Subscriptions.'
+          : 'Suscripción cancelada. Recuerda también cancelar en Ajustes > Apple ID > Suscripciones.'
+      );
+      setShowCancelFlow(false);
+      setCancelStep(1);
+      setCancelConfirmed(false);
+      navigate('/settings');
     } catch (error) {
       toast.error(t('common.error'));
     } finally {
@@ -223,41 +320,52 @@ export const SubscriptionPage = () => {
           <div className="space-y-3">
             <button
               onClick={() => handleChangePlan(false)}
-              disabled={isChangingPlan}
-              className="w-full p-4 rounded-xl border-2 border-primary bg-primary/5 flex items-center justify-between"
+              disabled={isChangingPlan || currentPlan === 'monthly'}
+              className={`w-full p-4 rounded-xl border-2 flex items-center justify-between transition-colors ${
+                currentPlan === 'monthly' 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-border hover:border-primary/50'
+              }`}
             >
               <div className="text-left">
                 <p className="font-semibold">{language === 'en' ? 'Monthly' : 'Mensual'}</p>
-                <p className="text-sm text-muted-foreground">$5.99/month</p>
+                <p className="text-sm text-muted-foreground">$5.99/{language === 'en' ? 'month' : 'mes'}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-primary font-bold">$5.99</span>
-                <Check className="w-5 h-5 text-primary" />
+                <span className={currentPlan === 'monthly' ? 'text-primary font-bold' : 'font-bold'}>$5.99</span>
+                {currentPlan === 'monthly' && <Check className="w-5 h-5 text-primary" />}
               </div>
             </button>
             
             <button
               onClick={() => handleChangePlan(true)}
-              disabled={isChangingPlan}
-              className="w-full p-4 rounded-xl border-2 border-border hover:border-primary/50 flex items-center justify-between relative transition-colors"
+              disabled={isChangingPlan || currentPlan === 'annual'}
+              className={`w-full p-4 rounded-xl border-2 flex items-center justify-between relative transition-colors ${
+                currentPlan === 'annual' 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-border hover:border-primary/50'
+              }`}
             >
               <div className="absolute -top-2 left-4 px-2 py-0.5 bg-gold text-gold-foreground text-xs font-semibold rounded-full">
                 {language === 'en' ? 'Save 30%' : 'Ahorra 30%'}
               </div>
               <div className="text-left">
                 <p className="font-semibold">{language === 'en' ? 'Annual' : 'Anual'}</p>
-                <p className="text-sm text-muted-foreground">$49.99/year</p>
+                <p className="text-sm text-muted-foreground">$49.99/{language === 'en' ? 'year' : 'año'}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-bold">$49.99</span>
-                <Sparkles className="w-5 h-5 text-gold" />
+                <span className={currentPlan === 'annual' ? 'text-primary font-bold' : 'font-bold'}>$49.99</span>
+                {currentPlan === 'annual' && <Check className="w-5 h-5 text-primary" />}
               </div>
             </button>
           </div>
           {isChangingPlan && (
-            <p className="text-center text-sm text-muted-foreground mt-3 animate-pulse">
-              {language === 'en' ? 'Opening payment...' : 'Abriendo pago...'}
-            </p>
+            <div className="flex items-center justify-center gap-2 mt-3">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <p className="text-sm text-muted-foreground">
+                {language === 'en' ? 'Opening Apple Pay...' : 'Abriendo Apple Pay...'}
+              </p>
+            </div>
           )}
         </motion.section>
 
@@ -274,7 +382,7 @@ export const SubscriptionPage = () => {
           </div>
         </motion.section>
 
-        <Button onClick={handleManageSubscription} className="w-full">
+        <Button onClick={handleUpdatePaymentMethod} className="w-full">
           {t('subscription.updatePayment')}
         </Button>
         
