@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Check, Shield, Sparkles, RefreshCw, AlertCircle, Smartphone } from 'lucide-react';
+import { Check, Shield, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/hooks/useAuth';
 import { Capacitor } from '@capacitor/core';
@@ -15,15 +14,67 @@ import {
   restorePurchases,
   checkPremiumStatus,
   recordPurchaseInDatabase,
-  isRevenueCatAvailable,
   PRODUCT_IDS,
   RevenueCatOffering,
-  RevenueCatPackage,
 } from '@/services/revenuecat-service';
 
 interface PaymentScreenProps {
   onNext: () => void;
 }
+
+// Robust platform detection for TestFlight/native iOS
+const detectPlatform = (): 'native' | 'web' => {
+  // Log all detection methods for debugging
+  console.log('=== PLATFORM DETECTION ===');
+  console.log('Capacitor.isNativePlatform():', Capacitor.isNativePlatform());
+  console.log('Capacitor.getPlatform():', Capacitor.getPlatform());
+  console.log('window.Capacitor:', (window as any).Capacitor);
+  console.log('navigator.userAgent:', navigator.userAgent);
+
+  // Check Capacitor native platform first
+  if (Capacitor.isNativePlatform()) {
+    console.log('Detected: Native via Capacitor.isNativePlatform()');
+    return 'native';
+  }
+
+  // Fallback: check if Capacitor platform is ios/android
+  const platform = Capacitor.getPlatform();
+  if (platform === 'ios' || platform === 'android') {
+    console.log('Detected: Native via Capacitor.getPlatform():', platform);
+    return 'native';
+  }
+
+  // Fallback: check window.Capacitor object
+  const windowCapacitor = (window as any).Capacitor;
+  if (windowCapacitor?.platform === 'ios' || windowCapacitor?.platform === 'android') {
+    console.log('Detected: Native via window.Capacitor.platform:', windowCapacitor.platform);
+    return 'native';
+  }
+
+  // Fallback: check user agent for iOS app webview indicators
+  const userAgent = navigator.userAgent || '';
+  
+  // Check for our app name in user agent (if configured in Capacitor)
+  if (userAgent.includes('SteadySteps')) {
+    console.log('Detected: Native via userAgent containing SteadySteps');
+    return 'native';
+  }
+
+  // Check for iOS standalone mode (installed PWA or native app)
+  if ((window.navigator as any).standalone === true) {
+    console.log('Detected: Native via navigator.standalone');
+    return 'native';
+  }
+
+  // Check for Capacitor iOS bridge
+  if ((window as any).webkit?.messageHandlers?.Capacitor) {
+    console.log('Detected: Native via webkit.messageHandlers.Capacitor');
+    return 'native';
+  }
+
+  console.log('Detected: Web (no native indicators found)');
+  return 'web';
+};
 
 export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const { t, language } = useLanguage();
@@ -35,9 +86,11 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [offerings, setOfferings] = useState<RevenueCatOffering | null>(null);
+  const [initFailed, setInitFailed] = useState(false);
   const trialEndDate = format(addDays(new Date(), 7), 'MMMM d, yyyy');
 
-  const isNative = Capacitor.isNativePlatform();
+  const detectedPlatform = detectPlatform();
+  console.log('Final platform detection result:', detectedPlatform);
 
   // Initialize RevenueCat and check existing subscription
   useEffect(() => {
@@ -51,8 +104,8 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
 
       try {
         console.log('=== INITIALIZING PAYMENT SCREEN ===');
-        console.log('Platform:', Capacitor.getPlatform());
-        console.log('Is native:', isNative);
+        console.log('User ID:', user.id);
+        console.log('User Email:', user.email);
 
         // Check existing subscription first
         const premiumStatus = await checkPremiumStatus(user.id, user.email || undefined);
@@ -70,18 +123,27 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           return;
         }
 
-        // Configure RevenueCat if on native platform
-        if (isNative) {
-          const configured = await configureRevenueCat(user.id);
+        // Always try to configure RevenueCat (no platform check)
+        console.log('Configuring RevenueCat...');
+        const configured = await configureRevenueCat(user.id);
+        console.log('RevenueCat configured:', configured);
+
+        if (configured) {
+          // Fetch offerings
+          console.log('Fetching offerings...');
+          const fetchedOfferings = await getOfferings();
+          console.log('Fetched offerings:', fetchedOfferings);
           
-          if (configured && isMounted) {
-            // Fetch offerings
-            const fetchedOfferings = await getOfferings();
-            console.log('Fetched offerings:', fetchedOfferings);
-            
-            if (fetchedOfferings) {
-              setOfferings(fetchedOfferings);
-            }
+          if (fetchedOfferings && isMounted) {
+            setOfferings(fetchedOfferings);
+          } else if (!fetchedOfferings && isMounted) {
+            console.warn('No offerings returned from RevenueCat');
+            // Don't fail - user might still be able to restore purchases
+          }
+        } else {
+          console.warn('RevenueCat configuration returned false');
+          if (isMounted) {
+            setInitFailed(true);
           }
         }
 
@@ -89,8 +151,10 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           setIsInitializing(false);
         }
       } catch (error) {
-        console.error('Initialization error:', error);
+        console.error('=== INITIALIZATION ERROR ===');
+        console.error('Error:', error);
         if (isMounted) {
+          setInitFailed(true);
           setIsInitializing(false);
         }
       }
@@ -101,7 +165,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
     return () => {
       isMounted = false;
     };
-  }, [user, isNative, language, onNext]);
+  }, [user, language, onNext]);
 
   const handleStartTrial = async () => {
     setIsLoading(true);
@@ -130,8 +194,8 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      // Handle native platform purchase
-      if (isNative && offerings?.availablePackages) {
+      // Attempt purchase if offerings available
+      if (offerings?.availablePackages) {
         // Find the right package
         const packageToPurchase = offerings.availablePackages.find(pkg => {
           if (selectedPlan === 'annual') {
@@ -190,15 +254,15 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           setIsLoading(false);
           return;
         }
+      } else {
+        // No offerings available
+        setErrorMessage(
+          language === 'en'
+            ? 'Unable to load subscription options. Please check your connection and try again.'
+            : 'No se pudieron cargar las opciones de suscripción. Verifica tu conexión e intenta de nuevo.'
+        );
+        setIsLoading(false);
       }
-
-      // Web platform - show message to use iOS app
-      setErrorMessage(
-        language === 'en'
-          ? 'In-app purchases are only available in the iOS app. Please download SteadySteps from the App Store to subscribe.'
-          : 'Las compras en la aplicación solo están disponibles en la app de iOS. Descarga SteadySteps desde la App Store para suscribirte.'
-      );
-      setIsLoading(false);
       
     } catch (error) {
       console.error('Purchase error:', error);
@@ -226,35 +290,27 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      if (isNative) {
-        // Use RevenueCat restore
-        const result = await restorePurchases();
-        
-        if (result.success && result.customerInfo) {
-          await recordPurchaseInDatabase(
-            user.id,
-            result.customerInfo.entitlements.active.premium?.identifier || PRODUCT_IDS.MONTHLY,
-            result.customerInfo.originalAppUserId
-          );
+      // Try RevenueCat restore
+      const result = await restorePurchases();
+      
+      if (result.success && result.customerInfo) {
+        await recordPurchaseInDatabase(
+          user.id,
+          result.customerInfo.entitlements.active.premium?.identifier || PRODUCT_IDS.MONTHLY,
+          result.customerInfo.originalAppUserId
+        );
 
-          setSuccessMessage(
-            language === 'en'
-              ? 'Subscription restored successfully!'
-              : '¡Suscripción restaurada exitosamente!'
-          );
-          setTimeout(() => onNext(), 1500);
-          return;
-        } else {
-          setErrorMessage(result.error || (
-            language === 'en'
-              ? 'No active subscription found.'
-              : 'No se encontró suscripción activa.'
-          ));
-        }
+        setSuccessMessage(
+          language === 'en'
+            ? 'Subscription restored successfully!'
+            : '¡Suscripción restaurada exitosamente!'
+        );
+        setTimeout(() => onNext(), 1500);
+        return;
       } else {
-        // Web platform - check database
+        // Also check database as fallback
         const premiumStatus = await checkPremiumStatus(user.id, user.email || undefined);
-
+        
         if (premiumStatus.isPremium) {
           setSuccessMessage(
             language === 'en'
@@ -263,11 +319,11 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           );
           setTimeout(() => onNext(), 1500);
         } else {
-          setErrorMessage(
+          setErrorMessage(result.error || (
             language === 'en'
-              ? 'No active subscription found. To restore purchases made in the iOS app, please open the app on your iPhone.'
-              : 'No se encontró suscripción activa. Para restaurar compras hechas en la app de iOS, abre la app en tu iPhone.'
-          );
+              ? 'No active subscription found.'
+              : 'No se encontró suscripción activa.'
+          ));
         }
       }
     } catch (error) {
@@ -282,47 +338,11 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
     }
   };
 
-  const handleVerifyPayment = async () => {
-    setIsVerifying(true);
+  const handleRetry = () => {
+    setInitFailed(false);
+    setIsInitializing(true);
     setErrorMessage(null);
-
-    try {
-      if (!user) {
-        setErrorMessage(
-          language === 'en'
-            ? 'Please log in to verify payment.'
-            : 'Por favor inicia sesión para verificar el pago.'
-        );
-        setIsVerifying(false);
-        return;
-      }
-
-      const premiumStatus = await checkPremiumStatus(user.id, user.email || undefined);
-
-      if (premiumStatus.isPremium) {
-        setSuccessMessage(
-          language === 'en'
-            ? 'Payment verified! Redirecting...'
-            : '¡Pago verificado! Redirigiendo...'
-        );
-        setTimeout(() => onNext(), 1500);
-      } else {
-        setErrorMessage(
-          language === 'en'
-            ? 'No payment found. Please subscribe via the iOS app to continue.'
-            : 'No se encontró pago. Suscríbete a través de la app de iOS para continuar.'
-        );
-      }
-    } catch (error) {
-      console.error('Verification error:', error);
-      setErrorMessage(
-        language === 'en'
-          ? 'Unable to verify payment. Please try again.'
-          : 'No se pudo verificar el pago. Intenta de nuevo.'
-      );
-    } finally {
-      setIsVerifying(false);
-    }
+    window.location.reload();
   };
 
   const features = [
@@ -370,6 +390,37 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
     );
   }
 
+  // Show error state if initialization failed
+  if (initFailed && !offerings) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
+        <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">
+          {language === 'en' ? 'Unable to Load' : 'No se pudo cargar'}
+        </h2>
+        <p className="text-muted-foreground mb-6">
+          {language === 'en' 
+            ? 'Could not connect to the App Store. Please check your internet connection and try again.'
+            : 'No se pudo conectar a la App Store. Verifica tu conexión a internet e intenta de nuevo.'}
+        </p>
+        <Button onClick={handleRetry} className="gap-2">
+          <RefreshCw className="w-4 h-4" />
+          {language === 'en' ? 'Try Again' : 'Intentar de nuevo'}
+        </Button>
+        <Button 
+          variant="ghost" 
+          onClick={handleRestorePurchases} 
+          className="mt-4"
+          disabled={isVerifying}
+        >
+          {isVerifying 
+            ? (language === 'en' ? 'Checking...' : 'Verificando...') 
+            : (language === 'en' ? 'Restore Purchases' : 'Restaurar compras')}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col px-6 py-12 overflow-auto">
       <motion.h1
@@ -410,28 +461,6 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         >
           <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
           <span className="text-destructive text-sm">{errorMessage}</span>
-        </motion.div>
-      )}
-
-      {/* iOS App Notice - Only show on web */}
-      {!isNative && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3"
-        >
-          <Smartphone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium text-primary">
-              {language === 'en' ? 'Subscribe via iOS App' : 'Suscríbete vía App iOS'}
-            </p>
-            <p className="text-muted-foreground mt-1">
-              {language === 'en' 
-                ? 'Download SteadySteps from the App Store to subscribe with Apple Pay.' 
-                : 'Descarga SteadySteps desde la App Store para suscribirte con Apple Pay.'}
-            </p>
-          </div>
         </motion.div>
       )}
 
@@ -500,75 +529,80 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         className="space-y-3 mb-6"
       >
         {features.map((feature, index) => (
-          <div key={index} className="flex items-center gap-3 text-sm">
-            <div className="w-5 h-5 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0">
-              <Check className="w-3 h-3 text-success" />
+          <div key={index} className="flex items-center gap-3">
+            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Check className="w-3 h-3 text-primary" />
             </div>
-            <span>{feature}</span>
+            <span className="text-sm text-foreground">{feature}</span>
           </div>
         ))}
       </motion.div>
 
-      {/* CTA Buttons */}
+      {/* Security Badge */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="space-y-3 mt-auto"
+        className="flex items-center justify-center gap-2 mb-6 text-muted-foreground"
+      >
+        <Shield className="w-4 h-4" />
+        <span className="text-xs">{t('payment.secure')}</span>
+      </motion.div>
+
+      {/* Start Trial Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
       >
         <Button
-          size="lg"
           onClick={handleStartTrial}
-          disabled={isLoading || isVerifying}
-          className="w-full py-6 text-lg font-semibold"
+          disabled={isLoading}
+          className="w-full h-14 text-lg font-semibold gap-2"
         >
           {isLoading ? (
             <>
-              <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-              {t('common.loading')}
+              <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              {language === 'en' ? 'Processing...' : 'Procesando...'}
             </>
           ) : (
             <>
-              <Sparkles className="w-5 h-5 mr-2" />
+              <Sparkles className="w-5 h-5" />
               {t('payment.startTrial')}
             </>
           )}
         </Button>
+      </motion.div>
 
-        {/* Restore Purchases - Required by Apple */}
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={handleRestorePurchases}
-          disabled={isLoading || isVerifying}
-          className="w-full py-5"
-        >
-          {isVerifying ? (
-            <>
-              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
-              {language === 'en' ? 'Checking...' : 'Verificando...'}
-            </>
-          ) : (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              {language === 'en' ? 'Restore Purchases' : 'Restaurar Compras'}
-            </>
-          )}
-        </Button>
+      {/* Trial Terms */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
+        className="text-center text-xs text-muted-foreground mt-4"
+      >
+        {language === 'en'
+          ? `Your free trial starts today. You will not be charged until ${trialEndDate}. ${selectedPlan === 'annual' ? `Then ${annualPrice}/year.` : `Then ${monthlyPrice}/month.`} Cancel anytime.`
+          : `Tu prueba gratuita comienza hoy. No se te cobrará hasta el ${trialEndDate}. ${selectedPlan === 'annual' ? `Después ${annualPrice}/año.` : `Después ${monthlyPrice}/mes.`} Cancela cuando quieras.`}
+      </motion.p>
 
-        {/* Verify Payment - For edge cases */}
+      {/* Restore Purchases */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7 }}
+        className="mt-6 text-center"
+      >
         <button
-          onClick={handleVerifyPayment}
-          disabled={isLoading || isVerifying}
-          className="w-full flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors py-3 text-sm"
+          onClick={handleRestorePurchases}
+          disabled={isVerifying}
+          className="text-sm text-primary hover:underline flex items-center gap-2 mx-auto"
         >
-          {language === 'en' ? "I've Already Subscribed" : 'Ya Estoy Suscrita'}
+          <RefreshCw className={`w-4 h-4 ${isVerifying ? 'animate-spin' : ''}`} />
+          {isVerifying 
+            ? (language === 'en' ? 'Restoring...' : 'Restaurando...') 
+            : t('payment.restore')}
         </button>
-
-        <p className="text-center text-xs text-muted-foreground">
-          <Shield className="w-3 h-3 inline mr-1" />
-          {t('payment.trialNote')} {trialEndDate}. {t('payment.cancelAnytime')}
-        </p>
       </motion.div>
     </div>
   );
