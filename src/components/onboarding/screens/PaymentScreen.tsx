@@ -394,6 +394,27 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   if (initFailed && !offerings) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
+        {/* DEBUG PANEL */}
+        <div style={{
+          background: 'black',
+          color: 'lime',
+          padding: '10px',
+          fontSize: '10px',
+          maxHeight: '200px',
+          overflow: 'auto',
+          marginBottom: '20px',
+          width: '100%',
+          textAlign: 'left',
+          borderRadius: '8px'
+        }}>
+          <p>Platform: {Capacitor.getPlatform()}</p>
+          <p>isNative: {String(Capacitor.isNativePlatform())}</p>
+          <p>Detected: {detectedPlatform}</p>
+          <p>window.Capacitor: {JSON.stringify((window as any).Capacitor?.platform)}</p>
+          <p>User ID: {user?.id || 'none'}</p>
+          <p>Error: {errorMessage || 'Init failed'}</p>
+        </div>
+
         <AlertCircle className="w-12 h-12 text-destructive mb-4" />
         <h2 className="text-xl font-semibold mb-2">
           {language === 'en' ? 'Unable to Load' : 'No se pudo cargar'}
