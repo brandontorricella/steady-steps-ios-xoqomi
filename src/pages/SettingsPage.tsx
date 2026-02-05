@@ -7,11 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle, LogOut } from 'lucide-react';
+ import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle, LogOut, RefreshCw } from 'lucide-react';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
+import {
+  restorePurchases,
+  checkSubscriptionStatus,
+  isSuperwallAvailable,
+} from '@/services/superwall-service';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,9 +44,23 @@ export const SettingsPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('Active');
 
   useEffect(() => {
     setProfile(getUserProfile());
+    // Check subscription status
+    async function checkStatus() {
+      if (isSuperwallAvailable()) {
+        try {
+          const status = await checkSubscriptionStatus();
+          setSubscriptionStatus(status === 'ACTIVE' ? 'Active' : 'Inactive');
+        } catch (e) {
+          console.log('Could not check subscription status');
+        }
+      }
+    }
+    checkStatus();
   }, []);
 
   if (!profile) return null;
@@ -109,6 +128,32 @@ export const SettingsPage = () => {
 
   const handleManageSubscription = () => {
     navigate('/subscription');
+  };
+ 
+  const handleRestorePurchases = async () => {
+    setIsRestoring(true);
+    try {
+      await restorePurchases();
+      const status = await checkSubscriptionStatus();
+      if (status === 'ACTIVE') {
+        setSubscriptionStatus('Active');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('profiles')
+            .update({ subscription_status: 'subscribed' })
+            .eq('id', user.id);
+        }
+        toast.success(language === 'en' ? 'Purchases restored successfully!' : '¡Compras restauradas exitosamente!');
+      } else {
+        toast.info(language === 'en' ? 'No active subscription found.' : 'No se encontró suscripción activa.');
+      }
+    } catch (error) {
+      console.error('Restore error:', error);
+      toast.error(language === 'en' ? 'Unable to restore purchases.' : 'No se pudieron restaurar las compras.');
+    } finally {
+      setIsRestoring(false);
+    }
   };
 
   const handleDownloadData = async () => {
@@ -444,6 +489,18 @@ export const SettingsPage = () => {
               </div>
             </button>
             
+            <button 
+              onClick={handleRestorePurchases}
+              disabled={isRestoring}
+              className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-5 h-5 text-muted-foreground ${isRestoring ? 'animate-spin' : ''}`} />
+              <div className="text-left flex-1">
+                <p className="font-medium">{isRestoring ? (language === 'en' ? 'Restoring...' : 'Restaurando...') : (language === 'en' ? 'Restore Purchases' : 'Restaurar Compras')}</p>
+                <p className="text-sm text-muted-foreground">{language === 'en' ? 'Restore previous subscriptions' : 'Restaurar suscripciones anteriores'}</p>
+              </div>
+            </button>
+
             <button 
               onClick={handleStartCancelFlow}
               className="w-full p-4 rounded-xl border border-destructive/30 bg-background flex items-center gap-4 hover:border-destructive/50 transition-colors"
