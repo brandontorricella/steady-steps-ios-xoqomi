@@ -10,5 +10,5 @@ end
 
 target 'App' do
   capacitor_pods
-  pod 'Superwall', '~> 3.0'
+  pod 'SuperwallKit'
 end
