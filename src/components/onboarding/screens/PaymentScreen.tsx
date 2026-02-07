@@ -1,16 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, RefreshCw, Loader2, Check, Crown, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 import {
   configureRevenueCat,
-  showPaywall,
+  getOfferings,
+  purchasePackage,
   checkSubscriptionStatus,
   isRevenueCatAvailable,
   restorePurchases,
+  RevenueCatPackage,
 } from '@/services/revenuecat-service';
 
 interface PaymentScreenProps {
@@ -25,8 +29,11 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showRetry, setShowRetry] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
+  const [monthlyPackage, setMonthlyPackage] = useState<RevenueCatPackage | null>(null);
+  const [annualPackage, setAnnualPackage] = useState<RevenueCatPackage | null>(null);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
   const addLog = useCallback((message: string) => {
@@ -41,7 +48,6 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   async function handlePaymentFlow() {
     setIsLoading(true);
     setError(null);
-    setShowRetry(false);
 
     try {
       addLog('=== PAYMENT SCREEN STARTED ===');
@@ -52,7 +58,6 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
       if (!user) {
         addLog('No user found - cannot proceed');
         setError('Authentication required');
-        setShowRetry(true);
         setIsLoading(false);
         return;
       }
@@ -109,30 +114,65 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      // Show RevenueCat paywall
-      addLog('Showing RevenueCat paywall...');
-      setIsLoading(false);
+      // Get offerings
+      addLog('Getting offerings...');
+      const offering = await getOfferings();
       
-      const purchased = await showPaywall();
-      addLog(`Paywall result: purchased=${purchased}`);
-
-      if (purchased) {
-        addLog('User subscribed successfully');
-        await updateSubscriptionStatus(user.id);
-        await markOnboardingComplete(user.id);
-        onNext();
+      if (offering) {
+        addLog(`Offering: ${offering.identifier}`);
+        addLog(`Packages: ${offering.availablePackages.length}`);
+        
+        const monthly = offering.availablePackages.find(
+          pkg => pkg.packageType === 'MONTHLY' || pkg.product.identifier === 'com.steadysteps.monthly'
+        );
+        const annual = offering.availablePackages.find(
+          pkg => pkg.packageType === 'ANNUAL' || pkg.product.identifier === 'com.steadysteps.annual'
+        );
+        
+        if (monthly) {
+          addLog(`Monthly: ${monthly.product.priceString}`);
+          setMonthlyPackage(monthly);
+        }
+        if (annual) {
+          addLog(`Annual: ${annual.product.priceString}`);
+          setAnnualPackage(annual);
+        }
       } else {
-        addLog('User did not subscribe');
-        setShowRetry(true);
-        setIsLoading(false);
+        addLog('No offerings available');
       }
+
+      setIsLoading(false);
 
     } catch (err: any) {
       addLog('=== PAYMENT FLOW ERROR ===');
       addLog(`Error: ${err.message || err}`);
       setError(err.message || 'Unable to load payment options');
-      setShowRetry(true);
       setIsLoading(false);
+    }
+  }
+
+  async function handlePurchase(pkg: RevenueCatPackage, planType: string) {
+    if (!user) return;
+    
+    setIsPurchasing(planType);
+    addLog(`Starting purchase for ${planType}...`);
+
+    try {
+      const success = await purchasePackage(pkg);
+      
+      if (success) {
+        addLog('Purchase successful!');
+        await updateSubscriptionStatus(user.id);
+        await markOnboardingComplete(user.id);
+        onNext();
+      } else {
+        addLog('Purchase cancelled or failed');
+        setIsPurchasing(null);
+      }
+    } catch (err: any) {
+      addLog(`Purchase error: ${err.message}`);
+      setError(err.message || 'Unable to complete purchase');
+      setIsPurchasing(null);
     }
   }
 
@@ -190,92 +230,83 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
     }
   }
 
-  function handleRetry() {
-    handlePaymentFlow();
-  }
-
   const texts = {
     en: {
       loading: 'Loading...',
-      subscriptionRequired: 'Subscription Required',
-      subscriptionDesc: 'A subscription is required to access SteadySteps and start your fitness journey.',
-      viewOptions: 'View Subscription Options',
+      title: 'Start Your Journey',
+      subtitle: 'Choose your plan and begin transforming your health',
+      monthly: 'Monthly',
+      annual: 'Annual',
+      perMonth: '/month',
+      perYear: '/year',
+      save: 'Save 30%',
+      freeTrial: '7-day free trial',
+      features: [
+        'Personalized daily check-ins',
+        'AI-powered fitness coach',
+        'Progress tracking & insights',
+        'Habit building tools',
+        'Community support',
+      ],
+      subscribe: 'Start Free Trial',
+      subscribing: 'Processing...',
       restore: 'Restore Purchases',
       restoring: 'Restoring...',
+      termsNote: 'Cancel anytime. Subscription auto-renews after trial.',
+      error: 'Something went wrong',
       tryAgain: 'Try Again',
-      unableToLoad: 'Unable to Load',
-      checkConnection: 'Could not connect to the App Store. Please check your internet connection.',
     },
     es: {
       loading: 'Cargando...',
-      subscriptionRequired: 'Suscripción Requerida',
-      subscriptionDesc: 'Se requiere una suscripción para acceder a SteadySteps y comenzar tu viaje fitness.',
-      viewOptions: 'Ver Opciones de Suscripción',
+      title: 'Comienza Tu Viaje',
+      subtitle: 'Elige tu plan y comienza a transformar tu salud',
+      monthly: 'Mensual',
+      annual: 'Anual',
+      perMonth: '/mes',
+      perYear: '/año',
+      save: 'Ahorra 30%',
+      freeTrial: '7 días de prueba gratis',
+      features: [
+        'Check-ins diarios personalizados',
+        'Entrenador fitness con IA',
+        'Seguimiento de progreso',
+        'Herramientas de hábitos',
+        'Apoyo comunitario',
+      ],
+      subscribe: 'Iniciar Prueba Gratis',
+      subscribing: 'Procesando...',
       restore: 'Restaurar Compras',
       restoring: 'Restaurando...',
+      termsNote: 'Cancela cuando quieras. Se renueva automáticamente.',
+      error: 'Algo salió mal',
       tryAgain: 'Intentar de Nuevo',
-      unableToLoad: 'No se pudo cargar',
-      checkConnection: 'No se pudo conectar con la App Store. Verifica tu conexión a internet.',
     },
   };
 
   const localT = texts[language];
 
-  // Debug panel component
-  const DebugPanel = () => (
-    <div style={{
-      background: 'black',
-      color: 'lime',
-      padding: '10px',
-      fontSize: '10px',
-      maxHeight: '200px',
-      overflow: 'auto',
-      marginBottom: '20px',
-      width: '100%',
-      textAlign: 'left',
-      borderRadius: '8px'
-    }}>
-      <p>Platform: {Capacitor.getPlatform()}</p>
-      <p>isNative: {String(Capacitor.isNativePlatform())}</p>
-      <p>RevenueCat: {String(isRevenueCatAvailable())}</p>
-      <p>User: {user?.id?.slice(0, 8) || 'none'}...</p>
-      <p>Error: {error || 'none'}</p>
-      <hr style={{ margin: '5px 0', borderColor: 'lime' }} />
-      {debugLogs.slice(-10).map((log, i) => (
-        <p key={i} style={{ margin: '2px 0' }}>{log}</p>
-      ))}
-    </div>
-  );
-
   // Loading state
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        <DebugPanel />
         <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
         <p className="text-muted-foreground">{localT.loading}</p>
       </div>
     );
   }
 
-  // Error or retry state
-  if (showRetry) {
+  // Error state with retry
+  if (error && !monthlyPackage && !annualPackage) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
-        <DebugPanel />
-        
         <AlertCircle className="w-12 h-12 text-destructive mb-4" />
-        <h2 className="text-xl font-semibold mb-2">
-          {error ? localT.unableToLoad : localT.subscriptionRequired}
-        </h2>
-        <p className="text-muted-foreground mb-6 max-w-xs">
-          {error || localT.subscriptionDesc}
-        </p>
+        <h2 className="text-xl font-semibold mb-2">{localT.error}</h2>
+        <p className="text-muted-foreground mb-6 max-w-xs">{error}</p>
         
         <div className="space-y-3 w-full max-w-xs">
-          <Button onClick={handleRetry} className="w-full" size="lg">
+          <Button onClick={() => handlePaymentFlow()} className="w-full" size="lg">
             <RefreshCw className="w-4 h-4 mr-2" />
-            {error ? localT.tryAgain : localT.viewOptions}
+            {localT.tryAgain}
           </Button>
           
           <Button 
@@ -291,6 +322,157 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
     );
   }
 
-  // Default: RevenueCat will show its own UI
-  return null;
+  // Main payment UI
+  return (
+    <div className="flex-1 flex flex-col px-6 py-8 overflow-auto">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Crown className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="text-2xl font-heading font-bold mb-2">{localT.title}</h1>
+        <p className="text-muted-foreground">{localT.subtitle}</p>
+      </div>
+
+      {/* Plan Selection */}
+      <div className="space-y-4 mb-6">
+        {/* Annual Plan */}
+        {annualPackage && (
+          <Card 
+            className={`cursor-pointer transition-all ${
+              selectedPlan === 'annual' 
+                ? 'ring-2 ring-primary border-primary' 
+                : 'hover:border-primary/50'
+            }`}
+            onClick={() => setSelectedPlan('annual')}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-lg">{localT.annual}</span>
+                    <Badge variant="secondary" className="bg-success/10 text-success border-0">
+                      {localT.save}
+                    </Badge>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold">
+                      {annualPackage.product.priceString || '$49.99'}
+                    </span>
+                    <span className="text-muted-foreground">{localT.perYear}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {localT.freeTrial}
+                  </p>
+                </div>
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                  selectedPlan === 'annual' 
+                    ? 'border-primary bg-primary' 
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {selectedPlan === 'annual' && (
+                    <Check className="w-4 h-4 text-primary-foreground" />
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Monthly Plan */}
+        {monthlyPackage && (
+          <Card 
+            className={`cursor-pointer transition-all ${
+              selectedPlan === 'monthly' 
+                ? 'ring-2 ring-primary border-primary' 
+                : 'hover:border-primary/50'
+            }`}
+            onClick={() => setSelectedPlan('monthly')}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <span className="font-semibold text-lg">{localT.monthly}</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold">
+                      {monthlyPackage.product.priceString || '$5.99'}
+                    </span>
+                    <span className="text-muted-foreground">{localT.perMonth}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {localT.freeTrial}
+                  </p>
+                </div>
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                  selectedPlan === 'monthly' 
+                    ? 'border-primary bg-primary' 
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {selectedPlan === 'monthly' && (
+                    <Check className="w-4 h-4 text-primary-foreground" />
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Features */}
+      <div className="mb-8">
+        <ul className="space-y-3">
+          {localT.features.map((feature, index) => (
+            <li key={index} className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
+                <Check className="w-3 h-3 text-success" />
+              </div>
+              <span className="text-sm">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Subscribe Button */}
+      <div className="space-y-3 mt-auto">
+        <Button
+          size="lg"
+          className="w-full py-6 text-lg font-semibold"
+          onClick={() => {
+            const pkg = selectedPlan === 'annual' ? annualPackage : monthlyPackage;
+            if (pkg) handlePurchase(pkg, selectedPlan);
+          }}
+          disabled={isPurchasing !== null || (!monthlyPackage && !annualPackage)}
+        >
+          {isPurchasing ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              {localT.subscribing}
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5 mr-2" />
+              {localT.subscribe}
+            </>
+          )}
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          onClick={handleRestore} 
+          disabled={isRestoring}
+          className="w-full"
+        >
+          {isRestoring ? localT.restoring : localT.restore}
+        </Button>
+
+        <p className="text-xs text-center text-muted-foreground px-4">
+          {localT.termsNote}
+        </p>
+
+        {error && (
+          <p className="text-xs text-center text-destructive">{error}</p>
+        )}
+      </div>
+    </div>
+  );
 };

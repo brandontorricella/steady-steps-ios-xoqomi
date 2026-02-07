@@ -6,6 +6,21 @@ let isConfigured = false;
 let Purchases: any = null;
 let LOG_LEVEL: any = null;
 
+export interface RevenueCatPackage {
+  identifier: string;
+  packageType: string;
+  product: {
+    identifier: string;
+    priceString: string;
+    price: number;
+  };
+}
+
+export interface RevenueCatOffering {
+  identifier: string;
+  availablePackages: RevenueCatPackage[];
+}
+
 /**
  * Check if RevenueCat is available (native platform only)
  */
@@ -66,20 +81,52 @@ export async function configureRevenueCat(userId?: string): Promise<boolean> {
 }
 
 /**
- * Show RevenueCat paywall
+ * Get available offerings from RevenueCat
  */
-export async function showPaywall(): Promise<boolean> {
-  console.log('=== SHOWING REVENUECAT PAYWALL ===');
+export async function getOfferings(): Promise<RevenueCatOffering | null> {
+  console.log('=== GETTING REVENUECAT OFFERINGS ===');
 
   try {
     const { Purchases: RC } = await getRevenueCatModule();
     
-    const result = await RC.presentPaywall();
-    console.log('Paywall result:', result);
+    const { offerings } = await RC.getOfferings();
+    console.log('Offerings:', offerings);
     
-    return result.paywallResponse === 'PURCHASED' || result.paywallResponse === 'RESTORED';
+    if (offerings.current) {
+      return offerings.current as RevenueCatOffering;
+    }
+    
+    return null;
   } catch (error) {
-    console.error('Show paywall error:', error);
+    console.error('Get offerings error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Purchase a package
+ */
+export async function purchasePackage(pkg: RevenueCatPackage): Promise<boolean> {
+  console.log('=== PURCHASING PACKAGE ===');
+  console.log('Package:', pkg);
+
+  try {
+    const { Purchases: RC } = await getRevenueCatModule();
+    
+    const { customerInfo } = await RC.purchasePackage({ aPackage: pkg });
+    console.log('Purchase result:', customerInfo);
+    
+    const isActive = customerInfo.entitlements.active['pro'] !== undefined;
+    console.log('Subscription active after purchase:', isActive);
+    
+    return isActive;
+  } catch (error: any) {
+    // Check if user cancelled
+    if (error.code === 1 || error.message?.includes('cancelled') || error.message?.includes('canceled')) {
+      console.log('User cancelled purchase');
+      return false;
+    }
+    console.error('Purchase error:', error);
     throw error;
   }
 }
