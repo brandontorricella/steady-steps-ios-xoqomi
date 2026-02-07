@@ -15,8 +15,8 @@ import { useLanguage } from '@/hooks/useLanguage';
 import {
   restorePurchases,
   checkSubscriptionStatus,
-  isSuperwallAvailable,
-} from '@/services/superwall-service';
+  isRevenueCatAvailable,
+} from '@/services/revenuecat-service';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,10 +51,10 @@ export const SettingsPage = () => {
     setProfile(getUserProfile());
     // Check subscription status
     async function checkStatus() {
-      if (isSuperwallAvailable()) {
+      if (isRevenueCatAvailable()) {
         try {
-          const status = await checkSubscriptionStatus();
-          setSubscriptionStatus(status === 'ACTIVE' ? 'Active' : 'Inactive');
+          const isActive = await checkSubscriptionStatus();
+          setSubscriptionStatus(isActive ? 'Active' : 'Inactive');
         } catch (e) {
           console.log('Could not check subscription status');
         }
@@ -133,9 +133,8 @@ export const SettingsPage = () => {
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
     try {
-      await restorePurchases();
-      const status = await checkSubscriptionStatus();
-      if (status === 'ACTIVE') {
+      const restored = await restorePurchases();
+      if (restored) {
         setSubscriptionStatus('Active');
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {

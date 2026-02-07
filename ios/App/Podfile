@@ -10,5 +10,5 @@ end
 
 target 'App' do
   capacitor_pods
-  pod 'SuperwallKit'
+  # RevenueCat is included via the @revenuecat/purchases-capacitor npm package
 end

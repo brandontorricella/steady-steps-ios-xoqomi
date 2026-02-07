@@ -7,14 +7,14 @@
  import { supabase } from '@/integrations/supabase/client';
  import { toast } from 'sonner';
  import { BottomNavigation } from '@/components/navigation/BottomNavigation';
- import {
-   configureSuperwall,
-   showPaywall,
-   checkSubscriptionStatus,
-   restorePurchases,
-   showManageSubscriptions,
-   isSuperwallAvailable,
- } from '@/services/superwall-service';
+import {
+  configureRevenueCat,
+  showPaywall,
+  checkSubscriptionStatus,
+  restorePurchases,
+  openSubscriptionManagement,
+  isRevenueCatAvailable,
+} from '@/services/revenuecat-service';
  
  export const SubscriptionPage = () => {
    const navigate = useNavigate();
@@ -53,14 +53,14 @@
            ? 'Active' 
            : 'Inactive');
  
-         // Configure Superwall if on native platform
-         if (isSuperwallAvailable()) {
-           await configureSuperwall(user.id);
-           const status = await checkSubscriptionStatus();
-           if (status === 'ACTIVE') {
-             setSubscriptionStatus('Active');
-           }
-         }
+          // Configure RevenueCat if on native platform
+          if (isRevenueCatAvailable()) {
+            await configureRevenueCat(user.id);
+            const isActive = await checkSubscriptionStatus();
+            if (isActive) {
+              setSubscriptionStatus('Active');
+            }
+          }
        } catch (error) {
          console.error('Error initializing subscription page:', error);
          setSubscriptionStatus('Unknown');
@@ -70,28 +70,26 @@
      initialize();
    }, []);
  
-   // Handle plan change via Superwall
-   const handleChangePlan = async (isAnnual: boolean) => {
-     if (!isSuperwallAvailable()) {
-       toast.info(
-         language === 'en'
-           ? 'Plan changes are only available in the iOS app. Go to Settings > Apple ID > Subscriptions.'
-           : 'Los cambios de plan solo están disponibles en la app iOS. Ve a Ajustes > Apple ID > Suscripciones.'
-       );
-       return;
-     }
+    // Handle plan change via RevenueCat
+    const handleChangePlan = async (isAnnual: boolean) => {
+      if (!isRevenueCatAvailable()) {
+        toast.info(
+          language === 'en'
+            ? 'Plan changes are only available in the iOS app. Go to Settings > Apple ID > Subscriptions.'
+            : 'Los cambios de plan solo están disponibles en la app iOS. Ve a Ajustes > Apple ID > Suscripciones.'
+        );
+        return;
+      }
  
      setIsChangingPlan(true);
-     try {
-       // Show Superwall paywall for plan change
-       await showPaywall();
-       
-       // Check if subscription was updated
-       const status = await checkSubscriptionStatus();
-       
-       if (status === 'ACTIVE' && userId) {
-         await supabase
-           .from('profiles')
+      try {
+        // Show RevenueCat paywall for plan change
+        const purchased = await showPaywall();
+        
+        // Check if subscription was updated
+        if (purchased && userId) {
+          await supabase
+            .from('profiles')
            .update({
              subscription_status: 'active',
            })
@@ -117,21 +115,20 @@
      }
    };
  
-   // Handle restore purchases
-   const handleRestorePurchases = async () => {
-     setIsRestoring(true);
-     try {
-       await restorePurchases();
-       const status = await checkSubscriptionStatus();
-       
-       if (status === 'ACTIVE' && userId) {
-         await supabase
-           .from('profiles')
-           .update({ subscription_status: 'subscribed' })
-           .eq('id', userId);
-         setSubscriptionStatus('Active');
-         toast.success(language === 'en' ? 'Purchases restored successfully!' : '¡Compras restauradas exitosamente!');
-       } else {
+    // Handle restore purchases
+    const handleRestorePurchases = async () => {
+      setIsRestoring(true);
+      try {
+        const restored = await restorePurchases();
+        
+        if (restored && userId) {
+          await supabase
+            .from('profiles')
+            .update({ subscription_status: 'subscribed' })
+            .eq('id', userId);
+          setSubscriptionStatus('Active');
+          toast.success(language === 'en' ? 'Purchases restored successfully!' : '¡Compras restauradas exitosamente!');
+        } else {
          toast.info(language === 'en' ? 'No active subscription found.' : 'No se encontró suscripción activa.');
        }
      } catch (error) {
@@ -142,18 +139,18 @@
      }
    };
  
-   // Handle manage subscription - opens Apple subscription management
-   const handleManageSubscription = async () => {
-     try {
-       await showManageSubscriptions();
-     } catch (error) {
-       toast.info(
-         language === 'en'
-           ? 'To manage your subscription, go to Settings > Apple ID > Subscriptions on your iPhone.'
-           : 'Para gestionar tu suscripción, ve a Ajustes > Apple ID > Suscripciones en tu iPhone.'
-       );
-     }
-   };
+    // Handle manage subscription - opens Apple subscription management
+    const handleManageSubscription = async () => {
+      try {
+        openSubscriptionManagement();
+      } catch (error) {
+        toast.info(
+          language === 'en'
+            ? 'To manage your subscription, go to Settings > Apple ID > Subscriptions on your iPhone.'
+            : 'Para gestionar tu suscripción, ve a Ajustes > Apple ID > Suscripciones en tu iPhone.'
+        );
+      }
+    };
  
    // Handle cancel subscription
    const handleCancelSubscription = async () => {
