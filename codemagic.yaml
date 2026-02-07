@@ -6,7 +6,7 @@ workflows:
     
     environment:
       groups:
-        - app_store_credentials
+        - app_store_connect
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.bat816.steady-steps
