@@ -114,31 +114,56 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         return;
       }
 
-      // Get offerings
+      // Get offerings with comprehensive error handling
       addLog('Getting offerings...');
-      const offering = await getOfferings();
+      
+      let offering = null;
+      try {
+        offering = await getOfferings();
+        addLog(`getOfferings returned: ${offering ? 'offering object' : 'null'}`);
+      } catch (offeringsError: any) {
+        addLog(`getOfferings threw error: ${offeringsError.message || offeringsError}`);
+        // Don't throw here - we'll show an error UI instead
+      }
       
       if (offering) {
-        addLog(`Offering: ${offering.identifier}`);
-        addLog(`Packages: ${offering.availablePackages.length}`);
+        addLog(`Offering identifier: ${offering.identifier || 'unknown'}`);
+        addLog(`Available packages count: ${offering.availablePackages?.length || 0}`);
         
-        const monthly = offering.availablePackages.find(
-          pkg => pkg.packageType === 'MONTHLY' || pkg.product.identifier === 'com.steadysteps.monthly'
-        );
-        const annual = offering.availablePackages.find(
-          pkg => pkg.packageType === 'ANNUAL' || pkg.product.identifier === 'com.steadysteps.annual'
-        );
-        
-        if (monthly) {
-          addLog(`Monthly: ${monthly.product.priceString}`);
-          setMonthlyPackage(monthly);
-        }
-        if (annual) {
-          addLog(`Annual: ${annual.product.priceString}`);
-          setAnnualPackage(annual);
+        if (offering.availablePackages && offering.availablePackages.length > 0) {
+          // Log all packages for debugging
+          offering.availablePackages.forEach((pkg, index) => {
+            addLog(`Package ${index}: type=${pkg.packageType}, id=${pkg.product?.identifier}, price=${pkg.product?.priceString}`);
+          });
+          
+          const monthly = offering.availablePackages.find(
+            pkg => pkg.packageType === 'MONTHLY' || pkg.product?.identifier === 'com.steadysteps.monthly'
+          );
+          const annual = offering.availablePackages.find(
+            pkg => pkg.packageType === 'ANNUAL' || pkg.product?.identifier === 'com.steadysteps.annual'
+          );
+          
+          if (monthly) {
+            addLog(`Monthly package found: ${monthly.product?.priceString}`);
+            setMonthlyPackage(monthly);
+          } else {
+            addLog('No monthly package found in offerings');
+          }
+          
+          if (annual) {
+            addLog(`Annual package found: ${annual.product?.priceString}`);
+            setAnnualPackage(annual);
+          } else {
+            addLog('No annual package found in offerings');
+          }
+        } else {
+          addLog('Offering has no available packages');
         }
       } else {
-        addLog('No offerings available');
+        addLog('No offerings available - will show error UI');
+        setError(language === 'en' 
+          ? 'Unable to load subscription plans. Please try again later.' 
+          : 'No se pudieron cargar los planes. Por favor intenta más tarde.');
       }
 
       setIsLoading(false);
