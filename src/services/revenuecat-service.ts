@@ -89,13 +89,40 @@ export async function getOfferings(): Promise<RevenueCatOffering | null> {
   try {
     const { Purchases: RC } = await getRevenueCatModule();
     
-    const { offerings } = await RC.getOfferings();
-    console.log('Offerings:', offerings);
+    console.log('Calling RC.getOfferings()...');
+    const result = await RC.getOfferings();
+    
+    console.log('Full offerings result:', JSON.stringify(result, null, 2));
+    
+    if (!result) {
+      console.log('getOfferings returned null/undefined');
+      return null;
+    }
+    
+    const { offerings } = result;
+    
+    if (!offerings) {
+      console.log('offerings object is null/undefined');
+      return null;
+    }
+    
+    console.log('offerings.current:', offerings.current);
+    console.log('offerings.all:', offerings.all);
     
     if (offerings.current) {
+      console.log('Returning current offering:', offerings.current.identifier);
+      console.log('Available packages:', offerings.current.availablePackages?.length || 0);
       return offerings.current as RevenueCatOffering;
     }
     
+    // If no current offering, try to get the first available one
+    if (offerings.all && Object.keys(offerings.all).length > 0) {
+      const firstKey = Object.keys(offerings.all)[0];
+      console.log('No current offering, using first available:', firstKey);
+      return offerings.all[firstKey] as RevenueCatOffering;
+    }
+    
+    console.log('No offerings available');
     return null;
   } catch (error) {
     console.error('Get offerings error:', error);
