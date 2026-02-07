@@ -9,11 +9,13 @@
  import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import {
   configureRevenueCat,
-  showPaywall,
+  getOfferings,
+  purchasePackage,
   checkSubscriptionStatus,
   restorePurchases,
   openSubscriptionManagement,
   isRevenueCatAvailable,
+  RevenueCatPackage,
 } from '@/services/revenuecat-service';
  
  export const SubscriptionPage = () => {
@@ -24,9 +26,11 @@ import {
    const [cancelConfirmed, setCancelConfirmed] = useState(false);
    const [isProcessing, setIsProcessing] = useState(false);
    const [isChangingPlan, setIsChangingPlan] = useState(false);
-   const [isRestoring, setIsRestoring] = useState(false);
-   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('Loading...');
-   const [currentPlan, setCurrentPlan] = useState<'monthly' | 'annual'>('monthly');
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('Loading...');
+  const [currentPlan, setCurrentPlan] = useState<'monthly' | 'annual'>('monthly');
+  const [monthlyPackage, setMonthlyPackage] = useState<RevenueCatPackage | null>(null);
+  const [annualPackage, setAnnualPackage] = useState<RevenueCatPackage | null>(null);
    const [userId, setUserId] = useState<string | null>(null);
  
    // Initialize and fetch current subscription info
@@ -60,6 +64,19 @@ import {
             if (isActive) {
               setSubscriptionStatus('Active');
             }
+            
+            // Fetch offerings
+            const offering = await getOfferings();
+            if (offering) {
+              const monthly = offering.availablePackages.find(
+                pkg => pkg.packageType === 'MONTHLY' || pkg.product.identifier === 'com.steadysteps.monthly'
+              );
+              const annual = offering.availablePackages.find(
+                pkg => pkg.packageType === 'ANNUAL' || pkg.product.identifier === 'com.steadysteps.annual'
+              );
+              if (monthly) setMonthlyPackage(monthly);
+              if (annual) setAnnualPackage(annual);
+            }
           }
        } catch (error) {
          console.error('Error initializing subscription page:', error);
@@ -83,8 +100,20 @@ import {
  
      setIsChangingPlan(true);
       try {
-        // Show RevenueCat paywall for plan change
-        const purchased = await showPaywall();
+        // Get the appropriate package
+        const pkg = isAnnual ? annualPackage : monthlyPackage;
+        
+        if (!pkg) {
+          toast.error(
+            language === 'en'
+              ? 'Unable to load subscription options. Please try again.'
+              : 'No se pudieron cargar las opciones. Intenta de nuevo.'
+          );
+          return;
+        }
+        
+        // Purchase the package
+        const purchased = await purchasePackage(pkg);
         
         // Check if subscription was updated
         if (purchased && userId) {
@@ -94,7 +123,7 @@ import {
              subscription_status: 'active',
            })
            .eq('id', userId);
- 
+
          toast.success(
            language === 'en' 
              ? 'Plan updated successfully!' 
