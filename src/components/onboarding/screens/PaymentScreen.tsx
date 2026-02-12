@@ -494,6 +494,27 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           {localT.termsNote}
         </p>
 
+        <p className="text-xs text-center text-muted-foreground px-4">
+          {language === 'en' ? 'By continuing, you agree to our ' : 'Al continuar, aceptas nuestros '}
+          <a
+            href="https://brandontorricella.github.io/steady-steps-ios-xoqomi/terms-of-use.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-primary"
+          >
+            {language === 'en' ? 'Terms of Use' : 'Términos de Uso'}
+          </a>
+          {language === 'en' ? ' and ' : ' y '}
+          <a
+            href="https://brandontorricella.github.io/steady-steps-ios-xoqomi/privacy-policy.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-primary"
+          >
+            {language === 'en' ? 'Privacy Policy' : 'Política de Privacidad'}
+          </a>
+        </p>
+
         {error && (
           <p className="text-xs text-center text-destructive">{error}</p>
         )}
