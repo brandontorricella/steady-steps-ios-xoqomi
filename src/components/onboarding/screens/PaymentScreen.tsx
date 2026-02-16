@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Browser } from '@capacitor/browser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -521,20 +522,24 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         </p>
 
         <p className="text-xs text-center text-muted-foreground px-4">
-          {language === 'en' ? 'By continuing, you agree to our ' : 'Al continuar, aceptas nuestros '}
+          {language === 'en' ? 'By subscribing, you agree to our ' : 'Al suscribirte, aceptas nuestros '}
           <a
-            href="https://brandontorricella.github.io/steady-steps-ios-xoqomi/terms-of-use.html"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/terms-of-use.html' });
+            }}
             className="underline text-primary"
           >
             {language === 'en' ? 'Terms of Use' : 'Términos de Uso'}
           </a>
           {language === 'en' ? ' and ' : ' y '}
           <a
-            href="https://brandontorricella.github.io/steady-steps-ios-xoqomi/privacy-policy.html"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/privacy-policy.html' });
+            }}
             className="underline text-primary"
           >
             {language === 'en' ? 'Privacy Policy' : 'Política de Privacidad'}
