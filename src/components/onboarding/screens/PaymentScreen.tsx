@@ -183,6 +183,17 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
     addLog(`Starting purchase for ${planType}...`);
 
     try {
+      // Check if user already has an active subscription
+      const alreadySubscribed = await checkSubscriptionStatus();
+      if (alreadySubscribed) {
+        addLog('User already has active subscription - blocking duplicate purchase');
+        setError(language === 'en'
+          ? 'You already have an active subscription. Use the Manage Subscription button in your profile to change plans.'
+          : 'Ya tienes una suscripción activa. Usa el botón Gestionar Suscripción en tu perfil para cambiar de plan.');
+        setIsPurchasing(null);
+        return;
+      }
+
       const success = await purchasePackage(pkg);
       
       if (success) {
@@ -191,12 +202,27 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
         await markOnboardingComplete(user.id);
         onNext();
       } else {
-        addLog('Purchase cancelled or failed');
+        addLog('Purchase cancelled by user');
         setIsPurchasing(null);
       }
     } catch (err: any) {
-      addLog(`Purchase error: ${err.message}`);
-      setError(err.message || 'Unable to complete purchase');
+      const errorCode = err.code || '';
+      const errorMsg = err.message || '';
+
+      if (errorCode === 1 || errorMsg.includes('cancelled') || errorMsg.includes('canceled') || errorCode === 'PURCHASE_CANCELLED') {
+        addLog('Purchase cancelled by user');
+        // No error message needed
+      } else if (errorMsg.includes('network') || errorCode === 'NETWORK_ERROR') {
+        addLog(`Network error: ${errorMsg}`);
+        setError(language === 'en'
+          ? 'Network error. Please check your connection and try again.'
+          : 'Error de red. Verifica tu conexión e intenta de nuevo.');
+      } else {
+        addLog(`Purchase error: ${errorMsg}`);
+        setError(language === 'en'
+          ? 'Something went wrong. Please try again or contact support.'
+          : 'Algo salió mal. Intenta de nuevo o contacta soporte.');
+      }
       setIsPurchasing(null);
     }
   }
