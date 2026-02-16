@@ -89,8 +89,10 @@ import {
          toast.info(language === 'en' ? 'No active subscription found.' : 'No se encontró suscripción activa.');
        }
      } catch (error) {
-       console.error('Restore error:', error);
-       toast.error(language === 'en' ? 'Unable to restore purchases. Please try again.' : 'No se pudieron restaurar las compras.');
+        console.error('Restore error:', error);
+        toast.error(language === 'en' 
+          ? 'Unable to restore purchases. Please try again or contact support@steadystepsapp.com.' 
+          : 'No se pudieron restaurar las compras. Intenta de nuevo o contacta support@steadystepsapp.com.');
      } finally {
        setIsRestoring(false);
      }
