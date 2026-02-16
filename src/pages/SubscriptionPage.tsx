@@ -1,6 +1,6 @@
  import { useState, useEffect } from 'react';
  import { motion } from 'framer-motion';
- import { ArrowLeft, CreditCard, Check, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+ import { ArrowLeft, CreditCard, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
  import { useNavigate } from 'react-router-dom';
  import { Button } from '@/components/ui/button';
  import { useLanguage } from '@/hooks/useLanguage';
@@ -9,13 +9,10 @@
  import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import {
   configureRevenueCat,
-  getOfferings,
-  purchasePackage,
   checkSubscriptionStatus,
   restorePurchases,
   openSubscriptionManagement,
   isRevenueCatAvailable,
-  RevenueCatPackage,
 } from '@/services/revenuecat-service';
  
  export const SubscriptionPage = () => {
@@ -25,12 +22,11 @@ import {
    const [cancelStep, setCancelStep] = useState(1);
    const [cancelConfirmed, setCancelConfirmed] = useState(false);
    const [isProcessing, setIsProcessing] = useState(false);
-   const [isChangingPlan, setIsChangingPlan] = useState(false);
+   
   const [isRestoring, setIsRestoring] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('Loading...');
   const [currentPlan, setCurrentPlan] = useState<'monthly' | 'annual'>('monthly');
-  const [monthlyPackage, setMonthlyPackage] = useState<RevenueCatPackage | null>(null);
-  const [annualPackage, setAnnualPackage] = useState<RevenueCatPackage | null>(null);
+    
    const [userId, setUserId] = useState<string | null>(null);
  
    // Initialize and fetch current subscription info
@@ -64,20 +60,7 @@ import {
             if (isActive) {
               setSubscriptionStatus('Active');
             }
-            
-            // Fetch offerings
-            const offering = await getOfferings();
-            if (offering) {
-              const monthly = offering.availablePackages.find(
-                pkg => pkg.packageType === 'MONTHLY' || pkg.product.identifier === 'com.steadysteps.monthly'
-              );
-              const annual = offering.availablePackages.find(
-                pkg => pkg.packageType === 'ANNUAL' || pkg.product.identifier === 'com.steadysteps.annual'
-              );
-              if (monthly) setMonthlyPackage(monthly);
-              if (annual) setAnnualPackage(annual);
-            }
-          }
+           }
        } catch (error) {
          console.error('Error initializing subscription page:', error);
          setSubscriptionStatus('Unknown');
@@ -87,62 +70,7 @@ import {
      initialize();
    }, []);
  
-    // Handle plan change via RevenueCat
-    const handleChangePlan = async (isAnnual: boolean) => {
-      if (!isRevenueCatAvailable()) {
-        toast.info(
-          language === 'en'
-            ? 'Plan changes are only available in the iOS app. Go to Settings > Apple ID > Subscriptions.'
-            : 'Los cambios de plan solo están disponibles en la app iOS. Ve a Ajustes > Apple ID > Suscripciones.'
-        );
-        return;
-      }
- 
-     setIsChangingPlan(true);
-      try {
-        // Get the appropriate package
-        const pkg = isAnnual ? annualPackage : monthlyPackage;
-        
-        if (!pkg) {
-          toast.error(
-            language === 'en'
-              ? 'Unable to load subscription options. Please try again.'
-              : 'No se pudieron cargar las opciones. Intenta de nuevo.'
-          );
-          return;
-        }
-        
-        // Purchase the package
-        const purchased = await purchasePackage(pkg);
-        
-        // Check if subscription was updated
-        if (purchased && userId) {
-          await supabase
-            .from('profiles')
-           .update({
-             subscription_status: 'active',
-           })
-           .eq('id', userId);
-
-         toast.success(
-           language === 'en' 
-             ? 'Plan updated successfully!' 
-             : '¡Plan actualizado exitosamente!'
-         );
-         setCurrentPlan(isAnnual ? 'annual' : 'monthly');
-         setSubscriptionStatus('Active');
-       }
-     } catch (error) {
-       console.error('Plan change error:', error);
-       toast.error(
-         language === 'en' 
-           ? 'Unable to change plan. Please try again.' 
-           : 'No se pudo cambiar el plan. Intenta de nuevo.'
-       );
-     } finally {
-       setIsChangingPlan(false);
-     }
-   };
+    
  
     // Handle restore purchases
     const handleRestorePurchases = async () => {
@@ -356,67 +284,25 @@ import {
            </div>
          </motion.section>
  
-         {/* Plan Change Options */}
-         <motion.section 
-           initial={{ opacity: 0, y: 20 }} 
-           animate={{ opacity: 1, y: 0 }} 
-           transition={{ delay: 0.15 }} 
-           className="p-6 rounded-2xl border-2 border-border bg-card"
-         >
-           <h2 className="font-heading font-semibold mb-4">
-             {language === 'en' ? 'Change Your Plan' : 'Cambiar Tu Plan'}
-           </h2>
-           <div className="space-y-3">
-             <button
-               onClick={() => handleChangePlan(false)}
-               disabled={isChangingPlan || currentPlan === 'monthly'}
-               className={`w-full p-4 rounded-xl border-2 flex items-center justify-between transition-colors ${
-                 currentPlan === 'monthly' 
-                   ? 'border-primary bg-primary/5' 
-                   : 'border-border hover:border-primary/50'
-               }`}
-             >
-               <div className="text-left">
-                 <p className="font-semibold">{language === 'en' ? 'Monthly' : 'Mensual'}</p>
-                 <p className="text-sm text-muted-foreground">$5.99/{language === 'en' ? 'month' : 'mes'}</p>
-               </div>
-               <div className="flex items-center gap-2">
-                 <span className={currentPlan === 'monthly' ? 'text-primary font-bold' : 'font-bold'}>$5.99</span>
-                 {currentPlan === 'monthly' && <Check className="w-5 h-5 text-primary" />}
-               </div>
-             </button>
-             
-             <button
-               onClick={() => handleChangePlan(true)}
-               disabled={isChangingPlan || currentPlan === 'annual'}
-               className={`w-full p-4 rounded-xl border-2 flex items-center justify-between relative transition-colors ${
-                 currentPlan === 'annual' 
-                   ? 'border-primary bg-primary/5' 
-                   : 'border-border hover:border-primary/50'
-               }`}
-             >
-               <div className="absolute -top-2 left-4 px-2 py-0.5 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
-                 {language === 'en' ? 'Save 30%' : 'Ahorra 30%'}
-               </div>
-               <div className="text-left">
-                 <p className="font-semibold">{language === 'en' ? 'Annual' : 'Anual'}</p>
-                 <p className="text-sm text-muted-foreground">$49.99/{language === 'en' ? 'year' : 'año'}</p>
-               </div>
-               <div className="flex items-center gap-2">
-                 <span className={currentPlan === 'annual' ? 'text-primary font-bold' : 'font-bold'}>$49.99</span>
-                 {currentPlan === 'annual' && <Check className="w-5 h-5 text-primary" />}
-               </div>
-             </button>
-           </div>
-           {isChangingPlan && (
-             <div className="flex items-center justify-center gap-2 mt-3">
-               <Loader2 className="w-4 h-4 animate-spin" />
-               <p className="text-sm text-muted-foreground">
-                 {language === 'en' ? 'Opening payment...' : 'Abriendo pago...'}
-               </p>
-             </div>
-           )}
-         </motion.section>
+          {/* Change Plan - directs to iOS Settings */}
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.15 }} 
+            className="p-6 rounded-2xl border-2 border-border bg-card"
+          >
+            <h2 className="font-heading font-semibold mb-2">
+              {language === 'en' ? 'Change Your Plan' : 'Cambiar Tu Plan'}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              {language === 'en'
+                ? 'To upgrade or downgrade your plan, manage your subscription through your Apple ID settings.'
+                : 'Para cambiar tu plan, gestiona tu suscripción a través de los ajustes de tu Apple ID.'}
+            </p>
+            <Button onClick={handleManageSubscription} variant="outline" className="w-full">
+              {language === 'en' ? 'Open Subscription Settings' : 'Abrir Ajustes de Suscripción'}
+            </Button>
+          </motion.section>
  
          {/* Manage Subscription */}
          <motion.section 
