@@ -339,7 +339,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 max-w-lg mx-auto w-full">
         <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
         <p className="text-muted-foreground">{localT.loading}</p>
       </div>
@@ -349,7 +349,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
   // Error state with retry
   if (error && !monthlyPackage && !annualPackage) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center max-w-lg mx-auto w-full">
         <AlertCircle className="w-12 h-12 text-destructive mb-4" />
         <h2 className="text-xl font-semibold mb-2">{localT.error}</h2>
         <p className="text-muted-foreground mb-6 max-w-xs">{error}</p>
@@ -375,7 +375,7 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
 
   // Main payment UI
   return (
-    <div className="flex-1 flex flex-col px-6 py-8 overflow-auto">
+    <div className="flex-1 flex flex-col px-6 py-8 overflow-auto max-w-lg mx-auto w-full">
       {/* Header */}
       <div className="text-center mb-8">
         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">

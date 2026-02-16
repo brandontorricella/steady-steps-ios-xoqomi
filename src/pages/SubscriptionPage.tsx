@@ -151,18 +151,20 @@ import {
    // Cancel Flow
    if (showCancelFlow) {
      return (
-       <div className="min-h-screen bg-background pb-24">
-         <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
-           <button 
-             onClick={() => { setShowCancelFlow(false); setCancelStep(1); setCancelConfirmed(false); }}
-             className="flex items-center gap-2 text-muted-foreground mb-4 min-h-[44px] min-w-[44px]"
-           >
-             <ArrowLeft className="w-5 h-5" />
-             <span>{t('common.back')}</span>
-           </button>
-         </header>
- 
-         <main className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+        <div className="min-h-screen bg-background pb-24">
+          <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
+            <div className="max-w-lg mx-auto">
+              <button 
+                onClick={() => { setShowCancelFlow(false); setCancelStep(1); setCancelConfirmed(false); }}
+                className="flex items-center gap-2 text-muted-foreground mb-4 min-h-[44px] min-w-[44px]"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>{t('common.back')}</span>
+              </button>
+            </div>
+          </header>
+
+          <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 max-w-lg mx-auto">
            {cancelStep === 1 && (
              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-sm text-center">
                <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-6">
@@ -250,20 +252,22 @@ import {
      );
    }
  
-   return (
-     <div className="min-h-screen bg-background pb-24">
-       <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
-         <button 
-           onClick={() => navigate(-1)} 
-           className="flex items-center gap-2 text-muted-foreground mb-4 min-h-[44px] min-w-[44px]"
-         >
-           <ArrowLeft className="w-5 h-5" />
-           <span>{t('common.back')}</span>
-         </button>
-         <h1 className="text-3xl font-heading font-bold">{t('subscription.title')}</h1>
-       </header>
- 
-        <main className="px-6 py-6 space-y-6">
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <header className="px-6 pt-8 pb-4 bg-card border-b border-border">
+          <div className="max-w-lg mx-auto">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="flex items-center gap-2 text-muted-foreground mb-4 min-h-[44px] min-w-[44px]"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>{t('common.back')}</span>
+            </button>
+            <h1 className="text-3xl font-heading font-bold">{t('subscription.title')}</h1>
+          </div>
+        </header>
+
+        <main className="px-6 py-6 space-y-6 max-w-lg mx-auto">
           {/* Current Plan */}
           <motion.section 
             initial={{ opacity: 0, y: 20 }} 
