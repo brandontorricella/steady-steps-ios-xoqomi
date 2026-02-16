@@ -263,71 +263,84 @@ import {
          <h1 className="text-3xl font-heading font-bold">{t('subscription.title')}</h1>
        </header>
  
-       <main className="px-6 py-6 space-y-6">
-         {/* Current Status */}
-         <motion.section 
-           initial={{ opacity: 0, y: 20 }} 
-           animate={{ opacity: 1, y: 0 }} 
-           className="p-6 rounded-2xl border-2 border-border bg-card"
-         >
-           <h2 className="font-heading font-semibold mb-2">{t('subscription.yourPlan')}</h2>
-           <div className="flex items-center justify-between mb-4">
-             <div>
-               <span className="text-lg font-bold">SteadySteps {currentPlan === 'annual' ? 'Annual' : 'Monthly'}</span>
-               <p className="text-sm text-muted-foreground">
-                 {currentPlan === 'annual' ? '$49.99/year' : '$5.99/month'}
-               </p>
-             </div>
-             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-               subscriptionStatus === 'Active' 
-                 ? 'bg-success/20 text-success' 
-                 : 'bg-muted text-muted-foreground'
-             }`}>
-               {subscriptionStatus}
-             </span>
-           </div>
-         </motion.section>
- 
-          {/* Subscription Management */}
+        <main className="px-6 py-6 space-y-6">
+          {/* Current Plan */}
           <motion.section 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
-            transition={{ delay: 0.15 }} 
             className="p-6 rounded-2xl border-2 border-border bg-card"
           >
-            <h2 className="font-heading font-semibold mb-2">
-              {language === 'en' ? 'Manage Subscription' : 'Gestionar Suscripción'}
-            </h2>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-heading font-semibold">
+                {language === 'en' ? 'Current Plan' : 'Plan Actual'}
+              </h2>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                subscriptionStatus === 'Active' 
+                  ? 'bg-success/20 text-success' 
+                  : 'bg-muted text-muted-foreground'
+              }`}>
+                {subscriptionStatus}
+              </span>
+            </div>
+            <p className="text-lg font-bold">
+              {currentPlan === 'annual' 
+                ? (language === 'en' ? 'Annual ($49.99/year)' : 'Anual ($49.99/año)')
+                : (language === 'en' ? 'Monthly ($5.99/month)' : 'Mensual ($5.99/mes)')}
+            </p>
+          </motion.section>
+
+          {/* Manage Subscription */}
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.1 }} 
+            className="p-6 rounded-2xl border-2 border-border bg-card"
+          >
             <p className="text-sm text-muted-foreground mb-4">
               {language === 'en'
-                ? 'To change your plan, update payment, or cancel, manage your subscription through your Apple ID settings.'
-                : 'Para cambiar tu plan, actualizar pago o cancelar, gestiona tu suscripción a través de los ajustes de tu Apple ID.'}
+                ? 'To change your subscription plan or cancel, tap the button below. This will open your device\'s Subscription Settings.'
+                : 'Para cambiar tu plan de suscripción o cancelar, toca el botón de abajo. Esto abrirá los Ajustes de Suscripción de tu dispositivo.'}
             </p>
-            <div className="space-y-3">
-              <Button onClick={handleManageSubscription} className="w-full justify-between">
-                <span>{language === 'en' ? 'Open Subscription Settings' : 'Abrir Ajustes de Suscripción'}</span>
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-              <Button 
-                onClick={handleRestorePurchases} 
-                variant="outline" 
-                disabled={isRestoring}
-                className="w-full justify-between"
-              >
-                <span>{isRestoring 
-                  ? (language === 'en' ? 'Restoring...' : 'Restaurando...') 
-                  : (language === 'en' ? 'Restore Purchases' : 'Restaurar Compras')}</span>
-                <RefreshCw className={`w-4 h-4 ${isRestoring ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
+
+            <Button onClick={handleManageSubscription} className="w-full bg-success hover:bg-success/90 text-success-foreground font-medium">
+              <span>{language === 'en' ? 'Manage Subscription in Settings' : 'Gestionar Suscripción en Ajustes'}</span>
+              <ExternalLink className="w-4 h-4 ml-2" />
+            </Button>
+
+            <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>{language === 'en' ? 'Switch between Monthly and Annual' : 'Cambiar entre Mensual y Anual'}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>{language === 'en' ? 'Update payment method' : 'Actualizar método de pago'}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>{language === 'en' ? 'Cancel subscription' : 'Cancelar suscripción'}</span>
+              </li>
+            </ul>
           </motion.section>
-         
-        <button 
-          onClick={() => setShowCancelFlow(true)} 
-          className="w-full text-center text-sm text-muted-foreground hover:text-destructive transition-colors py-2 min-h-[44px]"
-        >
-          {t('subscription.cancelSubscription')}
-        </button>
+
+          {/* Restore Purchases */}
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.2 }} 
+          >
+            <Button 
+              onClick={handleRestorePurchases} 
+              variant="outline" 
+              disabled={isRestoring}
+              className="w-full justify-between"
+            >
+              <span>{isRestoring 
+                ? (language === 'en' ? 'Restoring...' : 'Restaurando...') 
+                : (language === 'en' ? 'Restore Purchases' : 'Restaurar Compras')}</span>
+              <RefreshCw className={`w-4 h-4 ${isRestoring ? 'animate-spin' : ''}`} />
+            </Button>
+          </motion.section>
 
         <p className="text-xs text-center text-muted-foreground px-4 pb-2">
           <a
