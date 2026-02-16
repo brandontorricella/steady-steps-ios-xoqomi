@@ -1,4 +1,5 @@
- import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { Browser } from '@capacitor/browser';
  import { motion } from 'framer-motion';
  import { ArrowLeft, CreditCard, AlertTriangle, RefreshCw, ExternalLink } from 'lucide-react';
  import { useNavigate } from 'react-router-dom';
@@ -11,7 +12,6 @@ import {
   configureRevenueCat,
   checkSubscriptionStatus,
   restorePurchases,
-  openSubscriptionManagement,
   isRevenueCatAvailable,
 } from '@/services/revenuecat-service';
  
@@ -97,17 +97,21 @@ import {
    };
  
     // Handle manage subscription - opens Apple subscription management
-    const handleManageSubscription = async () => {
-      try {
-        openSubscriptionManagement();
-      } catch (error) {
-        toast.info(
-          language === 'en'
-            ? 'To manage your subscription, go to Settings > Apple ID > Subscriptions on your iPhone.'
-            : 'Para gestionar tu suscripción, ve a Ajustes > Apple ID > Suscripciones en tu iPhone.'
-        );
-      }
-    };
+     const handleManageSubscription = async () => {
+       try {
+         await Browser.open({ 
+           url: 'https://apps.apple.com/account/subscriptions',
+           presentationStyle: 'popover' as any
+         });
+       } catch (error) {
+         console.error('Error opening subscription management:', error);
+         toast.info(
+           language === 'en'
+             ? 'To manage your subscription, go to Settings > Apple ID > Subscriptions on your device.'
+             : 'Para gestionar tu suscripción, ve a Ajustes > Apple ID > Suscripciones en tu dispositivo.'
+         );
+       }
+     };
  
    // Handle cancel subscription
    const handleCancelSubscription = async () => {
