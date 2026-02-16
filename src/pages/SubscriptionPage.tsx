@@ -1,6 +1,6 @@
  import { useState, useEffect } from 'react';
  import { motion } from 'framer-motion';
- import { ArrowLeft, CreditCard, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+ import { ArrowLeft, CreditCard, AlertTriangle, RefreshCw, ExternalLink } from 'lucide-react';
  import { useNavigate } from 'react-router-dom';
  import { Button } from '@/components/ui/button';
  import { useLanguage } from '@/hooks/useLanguage';
@@ -284,7 +284,7 @@ import {
            </div>
          </motion.section>
  
-          {/* Change Plan - directs to iOS Settings */}
+          {/* Subscription Management */}
           <motion.section 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
@@ -292,46 +292,31 @@ import {
             className="p-6 rounded-2xl border-2 border-border bg-card"
           >
             <h2 className="font-heading font-semibold mb-2">
-              {language === 'en' ? 'Change Your Plan' : 'Cambiar Tu Plan'}
+              {language === 'en' ? 'Manage Subscription' : 'Gestionar Suscripción'}
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
               {language === 'en'
-                ? 'To upgrade or downgrade your plan, manage your subscription through your Apple ID settings.'
-                : 'Para cambiar tu plan, gestiona tu suscripción a través de los ajustes de tu Apple ID.'}
+                ? 'To change your plan, update payment, or cancel, manage your subscription through your Apple ID settings.'
+                : 'Para cambiar tu plan, actualizar pago o cancelar, gestiona tu suscripción a través de los ajustes de tu Apple ID.'}
             </p>
-            <Button onClick={handleManageSubscription} variant="outline" className="w-full">
-              {language === 'en' ? 'Open Subscription Settings' : 'Abrir Ajustes de Suscripción'}
-            </Button>
+            <div className="space-y-3">
+              <Button onClick={handleManageSubscription} className="w-full justify-between">
+                <span>{language === 'en' ? 'Open Subscription Settings' : 'Abrir Ajustes de Suscripción'}</span>
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+              <Button 
+                onClick={handleRestorePurchases} 
+                variant="outline" 
+                disabled={isRestoring}
+                className="w-full justify-between"
+              >
+                <span>{isRestoring 
+                  ? (language === 'en' ? 'Restoring...' : 'Restaurando...') 
+                  : (language === 'en' ? 'Restore Purchases' : 'Restaurar Compras')}</span>
+                <RefreshCw className={`w-4 h-4 ${isRestoring ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </motion.section>
- 
-         {/* Manage Subscription */}
-         <motion.section 
-           initial={{ opacity: 0, y: 20 }} 
-           animate={{ opacity: 1, y: 0 }} 
-           transition={{ delay: 0.2 }} 
-           className="p-6 rounded-2xl border-2 border-border bg-card"
-         >
-           <h2 className="font-heading font-semibold mb-4">
-             {language === 'en' ? 'Subscription Management' : 'Gestión de Suscripción'}
-           </h2>
-           <div className="space-y-3">
-             <Button onClick={handleManageSubscription} variant="outline" className="w-full justify-between">
-               <span>{language === 'en' ? 'Manage Subscription' : 'Gestionar Suscripción'}</span>
-               <CreditCard className="w-4 h-4" />
-             </Button>
-             <Button 
-               onClick={handleRestorePurchases} 
-               variant="outline" 
-               disabled={isRestoring}
-               className="w-full justify-between"
-             >
-               <span>{isRestoring 
-                 ? (language === 'en' ? 'Restoring...' : 'Restaurando...') 
-                 : (language === 'en' ? 'Restore Purchases' : 'Restaurar Compras')}</span>
-               <RefreshCw className={`w-4 h-4 ${isRestoring ? 'animate-spin' : ''}`} />
-             </Button>
-           </div>
-         </motion.section>
          
         <button 
           onClick={() => setShowCancelFlow(true)} 
