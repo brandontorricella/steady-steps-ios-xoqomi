@@ -525,22 +525,22 @@ export const PaymentScreen = ({ onNext }: PaymentScreenProps) => {
           {language === 'en' ? 'By subscribing, you agree to our ' : 'Al suscribirte, aceptas nuestros '}
           <a
             href="#"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.preventDefault();
-              Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/terms-of-use.html' });
+              await Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/terms-of-use.html', presentationStyle: 'popover' as any });
             }}
-            className="underline text-primary"
+            className="underline text-success"
           >
             {language === 'en' ? 'Terms of Use' : 'Términos de Uso'}
           </a>
           {language === 'en' ? ' and ' : ' y '}
           <a
             href="#"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.preventDefault();
-              Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/privacy-policy.html' });
+              await Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/privacy-policy.html', presentationStyle: 'popover' as any });
             }}
-            className="underline text-primary"
+            className="underline text-success"
           >
             {language === 'en' ? 'Privacy Policy' : 'Política de Privacidad'}
           </a>

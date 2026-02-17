@@ -350,19 +350,23 @@ import {
 
         <p className="text-xs text-center text-muted-foreground px-4 pb-2">
           <a
-            href="https://brandontorricella.github.io/steady-steps-ios-xoqomi/terms-of-use.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline text-primary"
+            href="#"
+            onClick={async (e) => {
+              e.preventDefault();
+              await Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/terms-of-use.html', presentationStyle: 'popover' as any });
+            }}
+            className="underline text-success"
           >
             {language === 'en' ? 'Terms of Use' : 'Términos de Uso'}
           </a>
           {' · '}
           <a
-            href="https://brandontorricella.github.io/steady-steps-ios-xoqomi/privacy-policy.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline text-primary"
+            href="#"
+            onClick={async (e) => {
+              e.preventDefault();
+              await Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/privacy-policy.html', presentationStyle: 'popover' as any });
+            }}
+            className="underline text-success"
           >
             {language === 'en' ? 'Privacy Policy' : 'Política de Privacidad'}
           </a>
