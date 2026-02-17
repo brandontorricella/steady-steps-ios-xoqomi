@@ -351,9 +351,9 @@ import {
         <p className="text-xs text-center text-muted-foreground px-4 pb-2">
           <a
             href="#"
-            onClick={async (e) => {
+            onClick={(e) => {
               e.preventDefault();
-              await Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/terms-of-use.html', presentationStyle: 'popover' as any });
+              navigate('/legal?tab=terms');
             }}
             className="underline text-success"
           >
@@ -362,9 +362,9 @@ import {
           {' · '}
           <a
             href="#"
-            onClick={async (e) => {
+            onClick={(e) => {
               e.preventDefault();
-              await Browser.open({ url: 'https://brandontorricella.github.io/steady-steps-ios-xoqomi/privacy-policy.html', presentationStyle: 'popover' as any });
+              navigate('/legal?tab=privacy');
             }}
             className="underline text-success"
           >
