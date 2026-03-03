@@ -13,7 +13,7 @@ import { ProgressPage } from "./pages/ProgressPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { CoachPage } from "./pages/CoachPage";
 import { AuthPage } from "./pages/AuthPage";
-import { HabitLibraryPage } from "./pages/HabitLibraryPage";
+
 import { DiscoverHabitsPage } from "./components/habits/DiscoverHabitsPage";
 import { HiddenCaloriesPage } from "./pages/HiddenCaloriesPage";
 import { WeeklySummaryPage } from "./pages/WeeklySummaryPage";
@@ -43,7 +43,7 @@ const App = () => (
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/coach" element={<CoachPage />} />
-                <Route path="/habit-library" element={<HabitLibraryPage />} />
+                
                 <Route path="/discover" element={<DiscoverHabitsPage />} />
                 <Route path="/hidden-calories" element={<HiddenCaloriesPage />} />
                 <Route path="/community" element={<CommunityPage />} />
