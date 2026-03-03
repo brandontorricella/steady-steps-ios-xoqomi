@@ -9,6 +9,8 @@ import { getUserProfile, getTodayCheckin, getWeeklyStats, saveUserProfile } from
 import { Flame, Trophy, Check, Settings2, CalendarDays, Sparkles } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
 import { GraceDaysCard } from './GraceDaysCard';
+import { WhyReminder } from './WhyReminder';
+import { WhyEditorModal } from './WhyEditorModal';
 import { DailyTipCard } from './DailyTipCard';
 import { CoachTipCard } from './CoachTipCard';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
