@@ -33,6 +33,7 @@ export const Dashboard = () => {
   const [showMicroLessons, setShowMicroLessons] = useState(false);
   const [showFlexibleProgress, setShowFlexibleProgress] = useState(false);
   const [showWeeklyReflection, setShowWeeklyReflection] = useState(false);
+  const [graceDayMessage, setGraceDayMessage] = useState<string | null>(null);
   const { language } = useLanguage();
   const { notification } = useNotificationLogic();
 
