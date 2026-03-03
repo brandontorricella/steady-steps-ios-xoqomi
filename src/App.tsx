@@ -20,6 +20,7 @@ import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { LegalPage } from "./pages/LegalPage";
 import { HelpPage } from "./pages/HelpPage";
 import { CommunityPage } from "./pages/CommunityPage";
+import { FutureMessagesPage } from "./components/messages/FutureMessagesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
