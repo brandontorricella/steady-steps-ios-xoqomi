@@ -68,7 +68,7 @@ export const ProgressPage = () => {
               className="p-6 rounded-2xl border-2 border-border bg-card"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-heading font-semibold">{t('progress.thisWeek') || 'This Week'}</h3>
+                <h3 className="font-heading font-semibold">This Week</h3>
                 <span className="text-sm text-muted-foreground">{weeklyStats.checkins}/7 days</span>
               </div>
               <div className="h-3 rounded-full bg-secondary overflow-hidden">
@@ -94,10 +94,28 @@ export const ProgressPage = () => {
             </motion.div>
           );
         })()}
+
+        {/* Badges */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <Button
+            variant="outline"
+            onClick={() => navigate('/badges')}
+            className="w-full h-auto py-4 flex items-center gap-3"
+          >
+            <Award className="w-6 h-6 text-primary" />
+            <span className="text-sm font-medium">Badges</span>
+          </Button>
+        </motion.div>
+
         {/* Stats Overview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
           className="grid grid-cols-3 gap-4"
         >
           <div className="p-4 rounded-xl bg-card border-2 border-border text-center">
@@ -118,7 +136,7 @@ export const ProgressPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.15 }}
           className="p-6 rounded-2xl border-2 border-border bg-card"
         >
           <h2 className="font-heading font-semibold mb-4">{t('dashboard.level')} Progress</h2>
@@ -144,7 +162,7 @@ export const ProgressPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.2 }}
           className="p-6 rounded-2xl gradient-primary text-primary-foreground"
         >
           <p className="text-sm opacity-80">{t('dashboard.stage')}</p>
@@ -156,7 +174,7 @@ export const ProgressPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.25 }}
           className="p-6 rounded-2xl border-2 border-border bg-card"
         >
           <div className="flex items-center justify-between mb-6">
@@ -180,7 +198,6 @@ export const ProgressPage = () => {
 
           {/* Calendar grid */}
           <div className="grid grid-cols-7 gap-1">
-            {/* Empty cells for days before month starts */}
             {Array.from({ length: monthStart.getDay() }).map((_, i) => (
               <div key={`empty-${i}`} className="aspect-square" />
             ))}
@@ -233,32 +250,6 @@ export const ProgressPage = () => {
             </div>
           </div>
         </motion.div>
-
-        {/* Quick Links */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="grid grid-cols-2 gap-3"
-        >
-          <Button
-            variant="outline"
-            onClick={() => navigate('/badges')}
-            className="h-auto py-4 flex flex-col gap-2"
-          >
-            <Award className="w-6 h-6 text-primary" />
-            <span className="text-xs">Badges</span>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/hidden-calories')}
-            className="h-auto py-4 flex flex-col gap-2"
-          >
-            <UtensilsCrossed className="w-6 h-6 text-primary" />
-            <span className="text-xs">Hidden Calories</span>
-          </Button>
-        </motion.div>
-      </main>
 
       <BottomNavigation />
     </div>
