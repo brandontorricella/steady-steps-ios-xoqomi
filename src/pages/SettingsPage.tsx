@@ -47,6 +47,7 @@ export const SettingsPage = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('Active');
+  const [showWhyEditor, setShowWhyEditor] = useState(false);
 
   useEffect(() => {
     setProfile(getUserProfile());
