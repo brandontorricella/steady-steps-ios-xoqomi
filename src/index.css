@@ -64,6 +64,14 @@
     --gradient-gold-start: 40 60% 75%;
     --gradient-gold-end: 35 55% 65%;
 
+    /* Cycle tracking phase colors */
+    --cycle-menstrual: 345 30% 45%;
+    --cycle-follicular: 130 35% 55%;
+    --cycle-ovulation: 42 65% 60%;
+    --cycle-luteal: 270 30% 52%;
+    --cycle-peri: 195 45% 50%;
+    --cycle-menopause: 20 60% 60%;
+
     /* Shadows */
     --shadow-soft: 0 4px 20px -4px hsl(145 35% 42% / 0.12);
     --shadow-glow: 0 0 30px hsl(145 35% 42% / 0.15);
