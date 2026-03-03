@@ -37,6 +37,8 @@ export const Dashboard = () => {
   const [showFlexibleProgress, setShowFlexibleProgress] = useState(false);
   const [showWeeklyReflection, setShowWeeklyReflection] = useState(false);
   const [graceDayMessage, setGraceDayMessage] = useState<string | null>(null);
+  const [showWhyReminder, setShowWhyReminder] = useState(false);
+  const [showWhyEditor, setShowWhyEditor] = useState(false);
   const { language } = useLanguage();
   const { notification } = useNotificationLogic();
 
