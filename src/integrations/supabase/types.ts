@@ -207,6 +207,142 @@ export type Database = {
           },
         ]
       }
+      cycle_daily_logs: {
+        Row: {
+          cramps: string | null
+          created_at: string | null
+          cycle_day: number | null
+          date: string
+          energy: string | null
+          flow: string | null
+          hot_flashes: string | null
+          id: string
+          is_bleeding: boolean | null
+          joint_pain: string | null
+          mood: string | null
+          night_sweats: boolean | null
+          notes: string | null
+          phase: string | null
+          sleep: string | null
+          symptoms: string[] | null
+          user_id: string
+        }
+        Insert: {
+          cramps?: string | null
+          created_at?: string | null
+          cycle_day?: number | null
+          date: string
+          energy?: string | null
+          flow?: string | null
+          hot_flashes?: string | null
+          id?: string
+          is_bleeding?: boolean | null
+          joint_pain?: string | null
+          mood?: string | null
+          night_sweats?: boolean | null
+          notes?: string | null
+          phase?: string | null
+          sleep?: string | null
+          symptoms?: string[] | null
+          user_id: string
+        }
+        Update: {
+          cramps?: string | null
+          created_at?: string | null
+          cycle_day?: number | null
+          date?: string
+          energy?: string | null
+          flow?: string | null
+          hot_flashes?: string | null
+          id?: string
+          is_bleeding?: boolean | null
+          joint_pain?: string | null
+          mood?: string | null
+          night_sweats?: boolean | null
+          notes?: string | null
+          phase?: string | null
+          sleep?: string | null
+          symptoms?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cycle_daily_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cycle_tracking_settings: {
+        Row: {
+          average_cycle_length: number | null
+          average_period_length: number | null
+          created_at: string | null
+          id: string
+          include_in_exports: boolean | null
+          last_period_start: string | null
+          period_frequency: string | null
+          setup_completed: boolean | null
+          show_on_home_screen: boolean | null
+          still_has_periods: boolean | null
+          symptoms_to_track: string[] | null
+          tracking_enabled: boolean | null
+          tracking_goals: string[] | null
+          tracking_mode: string
+          updated_at: string | null
+          use_for_insights: boolean | null
+          user_id: string
+        }
+        Insert: {
+          average_cycle_length?: number | null
+          average_period_length?: number | null
+          created_at?: string | null
+          id?: string
+          include_in_exports?: boolean | null
+          last_period_start?: string | null
+          period_frequency?: string | null
+          setup_completed?: boolean | null
+          show_on_home_screen?: boolean | null
+          still_has_periods?: boolean | null
+          symptoms_to_track?: string[] | null
+          tracking_enabled?: boolean | null
+          tracking_goals?: string[] | null
+          tracking_mode?: string
+          updated_at?: string | null
+          use_for_insights?: boolean | null
+          user_id: string
+        }
+        Update: {
+          average_cycle_length?: number | null
+          average_period_length?: number | null
+          created_at?: string | null
+          id?: string
+          include_in_exports?: boolean | null
+          last_period_start?: string | null
+          period_frequency?: string | null
+          setup_completed?: boolean | null
+          show_on_home_screen?: boolean | null
+          still_has_periods?: boolean | null
+          symptoms_to_track?: string[] | null
+          tracking_enabled?: boolean | null
+          tracking_goals?: string[] | null
+          tracking_mode?: string
+          updated_at?: string | null
+          use_for_insights?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cycle_tracking_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_checkins: {
         Row: {
           activity_completed: boolean | null
