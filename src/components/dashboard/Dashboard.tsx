@@ -433,8 +433,6 @@ export const Dashboard = () => {
         {/* Coach Tip Card */}
         <CoachTipCard />
 
-        {/* Daily Tip Card */}
-        <DailyTipCard />
       </main>
 
       <BottomNavigation />
