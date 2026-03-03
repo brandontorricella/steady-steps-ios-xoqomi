@@ -8,6 +8,7 @@ import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
 import { getUserProfile, getTodayCheckin, getWeeklyStats, saveUserProfile } from '@/lib/storage';
 import { Flame, Trophy, Check, Settings2, CalendarDays, Sparkles } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
+import { GraceDaysCard } from './GraceDaysCard';
 import { DailyTipCard } from './DailyTipCard';
 import { CoachTipCard } from './CoachTipCard';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
