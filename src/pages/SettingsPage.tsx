@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 import { ExitFeedbackModal } from '@/components/feedback/ExitFeedbackModal';
+import { WhyEditorModal } from '@/components/dashboard/WhyEditorModal';
 
 export const SettingsPage = () => {
   const navigate = useNavigate();
