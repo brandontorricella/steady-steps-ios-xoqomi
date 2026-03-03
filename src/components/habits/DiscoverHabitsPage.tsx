@@ -173,6 +173,22 @@ export const DiscoverHabitsPage = () => {
       </header>
 
       <main className="px-6 py-4 space-y-4">
+        {/* Hidden Calories Quick Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl border-2 border-border bg-card flex items-center justify-between cursor-pointer hover:bg-secondary/50 transition-colors"
+          onClick={() => navigate('/hidden-calories')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔍</span>
+            <div>
+              <p className="font-semibold text-sm">{language === 'en' ? 'Hidden Calories Guide' : 'Guía de Calorías Ocultas'}</p>
+              <p className="text-xs text-muted-foreground">{language === 'en' ? 'Spot sneaky calories in everyday foods' : 'Detecta calorías ocultas en alimentos cotidianos'}</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </motion.div>
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
