@@ -6,9 +6,12 @@ import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
 import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
 import { getUserProfile, getTodayCheckin, getWeeklyStats, saveUserProfile } from '@/lib/storage';
-import { Flame, Trophy, Check, Settings2, CalendarDays, Sparkles } from 'lucide-react';
+import { Flame, Trophy, Check, Settings2, CalendarDays, Sparkles, Heart } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
+import { BadDayFlow } from './BadDayFlow';
 import { GraceDaysCard } from './GraceDaysCard';
+import { WhyReminder } from './WhyReminder';
+import { WhyEditorModal } from './WhyEditorModal';
 import { DailyTipCard } from './DailyTipCard';
 import { CoachTipCard } from './CoachTipCard';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
@@ -35,6 +38,9 @@ export const Dashboard = () => {
   const [showFlexibleProgress, setShowFlexibleProgress] = useState(false);
   const [showWeeklyReflection, setShowWeeklyReflection] = useState(false);
   const [graceDayMessage, setGraceDayMessage] = useState<string | null>(null);
+  const [showWhyReminder, setShowWhyReminder] = useState(false);
+  const [showWhyEditor, setShowWhyEditor] = useState(false);
+  const [showBadDay, setShowBadDay] = useState(false);
   const { language } = useLanguage();
   const { notification } = useNotificationLogic();
 
@@ -144,6 +150,16 @@ export const Dashboard = () => {
         }
       }
       
+      // Show "Why" reminder if 2+ days since last check-in and user has a why
+      if (userProfile.whyText && userProfile.lastCheckinDate) {
+        const daysSinceCheckin = Math.floor(
+          (new Date().setHours(0,0,0,0) - new Date(userProfile.lastCheckinDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)
+        );
+        if (daysSinceCheckin >= 2) {
+          setShowWhyReminder(true);
+        }
+      }
+
       setProfile(userProfile);
       const todayCheckin = getTodayCheckin();
       setTodayCompleted(todayCheckin?.checkinCompleted || false);
@@ -160,6 +176,10 @@ export const Dashboard = () => {
 
   const weeklyStats = getWeeklyStats();
   const weeklyProgress = (weeklyStats.checkins / 7) * 100;
+
+  if (showBadDay) {
+    return <BadDayFlow profile={profile} onComplete={() => setShowBadDay(false)} onCancel={() => setShowBadDay(false)} />;
+  }
 
   if (showCheckin) {
     return <DailyCheckinFlow profile={profile} onComplete={() => setShowCheckin(false)} />;
@@ -289,6 +309,13 @@ export const Dashboard = () => {
               <Check className="w-6 h-6 mr-2" />
               {t.checkIn}
             </Button>
+            <button
+              onClick={() => setShowBadDay(true)}
+              className="w-full mt-3 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2"
+            >
+              <Heart className="w-4 h-4" />
+              {language === 'en' ? 'Having a hard day?' : '¿Teniendo un día difícil?'}
+            </button>
           </motion.div>
         ) : (
           <motion.div
@@ -423,6 +450,37 @@ export const Dashboard = () => {
       <WeeklyReflectionModal
         isOpen={showWeeklyReflection}
         onClose={() => setShowWeeklyReflection(false)}
+      />
+
+      {/* Why Reminder Modal */}
+      {profile.whyText && (
+        <WhyReminder
+          whyText={profile.whyText}
+          isVisible={showWhyReminder}
+          onClose={() => setShowWhyReminder(false)}
+          onEdit={() => {
+            setShowWhyReminder(false);
+            setShowWhyEditor(true);
+          }}
+        />
+      )}
+
+      {/* Why Editor Modal */}
+      <WhyEditorModal
+        isOpen={showWhyEditor}
+        currentText={profile.whyText}
+        onSave={(text) => {
+          const updated = { ...profile, whyText: text, whyCreatedAt: new Date().toISOString() };
+          setProfile(updated);
+          saveUserProfile(updated);
+          if (user) {
+            supabase.from('profiles').update({
+              why_text: text,
+              why_created_at: new Date().toISOString(),
+            }).eq('id', user.id).then(() => {});
+          }
+        }}
+        onClose={() => setShowWhyEditor(false)}
       />
     </div>
   );

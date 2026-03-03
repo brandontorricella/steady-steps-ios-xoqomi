@@ -11,6 +11,7 @@ import { TimeCommitmentScreen } from './screens/TimeCommitmentScreen';
 import { ObstacleScreen } from './screens/ObstacleScreen';
 import { DietPreferenceScreen } from './screens/DietPreferenceScreen';
 import { ConfidenceScreen } from './screens/ConfidenceScreen';
+import { WhyScreen } from './screens/WhyScreen';
 import { MeetCoachScreen } from './screens/MeetCoachScreen';
 import { NotificationScreen } from './screens/NotificationScreen';
 import { TermsScreen } from './screens/TermsScreen';
@@ -73,16 +74,17 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
   // 4: Goal
   // 5: Activity Level
   // 6: Nutrition Challenge
-  // 7: Biggest Obstacle (NEW)
-  // 8: Diet Preference (NEW)
-  // 9: Confidence Level (NEW)
-  // 10: Time Commitment
-  // 11: Meet Coach
-  // 12: Notifications
-  // 13: Terms & Privacy
-  // 14: Payment
-  // 15: Starting Point
-  // 16: First Day
+  // 7: Biggest Obstacle
+  // 8: Diet Preference
+  // 9: Confidence Level
+  // 10: Why I'm Doing This (NEW)
+  // 11: Time Commitment
+  // 12: Meet Coach
+  // 13: Notifications
+  // 14: Terms & Privacy
+  // 15: Payment
+  // 16: Starting Point
+  // 17: First Day
   const screens = [
     <LanguageScreen key="language" onNext={handleNext} />,
     <WelcomeScreen key="welcome" onNext={handleNext} />,
@@ -94,6 +96,7 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
     <ObstacleScreen key="obstacle" value={profile.biggestObstacle} onChange={(v) => updateProfile({ biggestObstacle: v })} onNext={handleNext} />,
     <DietPreferenceScreen key="diet" value={profile.dietPreference} onChange={(v) => updateProfile({ dietPreference: v })} onNext={handleNext} />,
     <ConfidenceScreen key="confidence" value={profile.fitnessConfidence} onChange={(v) => updateProfile({ fitnessConfidence: v })} onNext={handleNext} />,
+    <WhyScreen key="why" value={profile.whyText} onChange={(v) => updateProfile({ whyText: v, whyCreatedAt: new Date().toISOString() })} onNext={handleNext} />,
     <TimeCommitmentScreen key="time" value={profile.dailyTimeCommitment} onChange={(v) => updateProfile({ dailyTimeCommitment: v })} onNext={handleNext} />,
     <MeetCoachScreen key="coach" onNext={handleNext} />,
     <NotificationScreen 

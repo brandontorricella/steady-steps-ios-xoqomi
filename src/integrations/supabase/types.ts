@@ -94,6 +94,7 @@ export type Database = {
           energy_level: number | null
           habit_completion: string | null
           id: string
+          is_bad_day: boolean | null
           library_habits_completed: string[] | null
           mood: string | null
           nutrition_responses: Json | null
@@ -110,6 +111,7 @@ export type Database = {
           energy_level?: number | null
           habit_completion?: string | null
           id?: string
+          is_bad_day?: boolean | null
           library_habits_completed?: string[] | null
           mood?: string | null
           nutrition_responses?: Json | null
@@ -126,6 +128,7 @@ export type Database = {
           energy_level?: number | null
           habit_completion?: string | null
           id?: string
+          is_bad_day?: boolean | null
           library_habits_completed?: string[] | null
           mood?: string | null
           nutrition_responses?: Json | null
@@ -177,6 +180,7 @@ export type Database = {
         Row: {
           active_library_habits: string[] | null
           activity_level: string | null
+          bad_days_count: number
           biggest_obstacle: string | null
           buddy_match_opt_in: boolean | null
           coach_conversations_count: number | null
@@ -220,10 +224,13 @@ export type Database = {
           trial_start_date: string | null
           updated_at: string | null
           weekly_summary_enabled: boolean | null
+          why_created_at: string | null
+          why_text: string | null
         }
         Insert: {
           active_library_habits?: string[] | null
           activity_level?: string | null
+          bad_days_count?: number
           biggest_obstacle?: string | null
           buddy_match_opt_in?: boolean | null
           coach_conversations_count?: number | null
@@ -267,10 +274,13 @@ export type Database = {
           trial_start_date?: string | null
           updated_at?: string | null
           weekly_summary_enabled?: boolean | null
+          why_created_at?: string | null
+          why_text?: string | null
         }
         Update: {
           active_library_habits?: string[] | null
           activity_level?: string | null
+          bad_days_count?: number
           biggest_obstacle?: string | null
           buddy_match_opt_in?: boolean | null
           coach_conversations_count?: number | null
@@ -314,6 +324,8 @@ export type Database = {
           trial_start_date?: string | null
           updated_at?: string | null
           weekly_summary_enabled?: boolean | null
+          why_created_at?: string | null
+          why_text?: string | null
         }
         Relationships: []
       }

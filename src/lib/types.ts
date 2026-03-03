@@ -54,6 +54,11 @@ export interface UserProfile {
   graceDaysRemaining: number;
   graceDaysLastReset: string | null;
   graceDaysUsedDates: string[];
+  // Why I'm Doing This
+  whyText: string | null;
+  whyCreatedAt: string | null;
+  // Bad day tracking
+  badDaysCount: number;
 }
 
 export interface DailyCheckin {

@@ -250,6 +250,9 @@ function mapDatabaseToProfile(data: DatabaseProfile): UserProfile {
     graceDaysRemaining: (data as any).grace_days_remaining ?? 3,
     graceDaysLastReset: (data as any).grace_days_last_reset || null,
     graceDaysUsedDates: (data as any).grace_days_used_dates || [],
+    whyText: (data as any).why_text || null,
+    whyCreatedAt: (data as any).why_created_at || null,
+    badDaysCount: (data as any).bad_days_count || 0,
   };
 }
 
@@ -293,6 +296,9 @@ function mapProfileToDatabase(profile: Partial<UserProfile>): Record<string, unk
   if (profile.graceDaysRemaining !== undefined) mapping.grace_days_remaining = profile.graceDaysRemaining;
   if (profile.graceDaysLastReset !== undefined) mapping.grace_days_last_reset = profile.graceDaysLastReset;
   if (profile.graceDaysUsedDates !== undefined) mapping.grace_days_used_dates = profile.graceDaysUsedDates;
+  if (profile.whyText !== undefined) mapping.why_text = profile.whyText;
+  if (profile.whyCreatedAt !== undefined) mapping.why_created_at = profile.whyCreatedAt;
+  if (profile.badDaysCount !== undefined) mapping.bad_days_count = profile.badDaysCount;
   
   return mapping;
 }

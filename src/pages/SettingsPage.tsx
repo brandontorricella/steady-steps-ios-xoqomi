@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
- import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle, LogOut, RefreshCw } from 'lucide-react';
+ import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle, LogOut, RefreshCw, Heart } from 'lucide-react';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 import { ExitFeedbackModal } from '@/components/feedback/ExitFeedbackModal';
+import { WhyEditorModal } from '@/components/dashboard/WhyEditorModal';
 
 export const SettingsPage = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ export const SettingsPage = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('Active');
+  const [showWhyEditor, setShowWhyEditor] = useState(false);
 
   useEffect(() => {
     setProfile(getUserProfile());
@@ -464,6 +466,44 @@ export const SettingsPage = () => {
           </div>
         </motion.section>
 
+        {/* My Motivation */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.025 }}
+          className="p-6 rounded-2xl border-2 border-border bg-card"
+        >
+          <h2 className="font-heading font-semibold mb-4 flex items-center gap-2">
+            <Heart className="w-5 h-5" />
+            {language === 'en' ? 'My Motivation' : 'Mi Motivación'}
+          </h2>
+          {profile.whyText ? (
+            <div className="space-y-3">
+              <blockquote className="text-sm italic text-muted-foreground border-l-4 border-primary/30 pl-3">
+                "{profile.whyText}"
+              </blockquote>
+              <button
+                onClick={() => setShowWhyEditor(true)}
+                className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+              >
+                {language === 'en' ? 'Edit My Why' : 'Editar Mi Por Qué'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowWhyEditor(true)}
+              className="w-full p-4 rounded-xl border border-dashed border-primary/30 bg-primary/5 text-center"
+            >
+              <p className="text-sm font-medium text-primary">
+                {language === 'en' ? 'Add your personal motivation' : 'Agrega tu motivación personal'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {language === 'en' ? 'Your anchor when motivation is low' : 'Tu ancla cuando la motivación es baja'}
+              </p>
+            </button>
+          )}
+        </motion.section>
+
         {/* Subscription */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -692,6 +732,25 @@ export const SettingsPage = () => {
         isOpen={showExitFeedback}
         onClose={() => setShowExitFeedback(false)}
         onComplete={handleExitFeedbackComplete}
+      />
+
+      {/* Why Editor Modal */}
+      <WhyEditorModal
+        isOpen={showWhyEditor}
+        currentText={profile.whyText}
+        onSave={async (text) => {
+          const updated = { ...profile, whyText: text, whyCreatedAt: new Date().toISOString() };
+          setProfile(updated);
+          saveUserProfile(updated);
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            await supabase.from('profiles').update({
+              why_text: text,
+              why_created_at: new Date().toISOString(),
+            }).eq('id', authUser.id);
+          }
+        }}
+        onClose={() => setShowWhyEditor(false)}
       />
     </div>
   );
