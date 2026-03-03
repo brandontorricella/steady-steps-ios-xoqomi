@@ -254,6 +254,9 @@ export const Dashboard = () => {
           </motion.div>
         )}
 
+        {/* Milestone Message Prompt / Delivery */}
+        <MilestoneMessagePrompt />
+
         {/* Not Behind Banner */}
         <NotBehindBanner />
 

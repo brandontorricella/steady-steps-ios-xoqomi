@@ -504,6 +504,30 @@ export const SettingsPage = () => {
           )}
         </motion.section>
 
+        {/* Messages to Future Me */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.03 }}
+          className="p-6 rounded-2xl border-2 border-border bg-card"
+        >
+          <h2 className="font-heading font-semibold mb-4 flex items-center gap-2">
+            <Mail className="w-5 h-5" />
+            {language === 'en' ? 'Messages to Future Me' : 'Mensajes a Mi Yo del Futuro'}
+          </h2>
+          <button
+            onClick={() => navigate('/messages')}
+            className="w-full p-4 rounded-xl border border-border bg-background flex items-center gap-4 hover:border-primary/50 transition-colors"
+          >
+            <Mail className="w-5 h-5 text-muted-foreground" />
+            <div className="text-left flex-1">
+              <p className="font-medium">{language === 'en' ? 'View My Messages' : 'Ver Mis Mensajes'}</p>
+              <p className="text-sm text-muted-foreground">{language === 'en' ? 'Write, schedule, and read messages from Past You' : 'Escribe, programa y lee mensajes de Tu Yo del Pasado'}</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </motion.section>
+
         {/* Subscription */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
