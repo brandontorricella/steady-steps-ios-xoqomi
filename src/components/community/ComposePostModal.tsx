@@ -101,74 +101,78 @@ export const ComposePostModal = ({ onClose, onCreated }: ComposePostModalProps) 
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-lg mx-auto bg-card rounded-t-3xl border-t border-border p-6 max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg mx-auto bg-card rounded-t-3xl border-t border-border max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-heading font-bold">{t.title}</h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Anonymous identity */}
-        <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-secondary/50">
-          <Shield className="w-4 h-4 text-primary" />
-          <div>
-            <p className="text-sm font-medium">{t.posting}: <span className="text-primary">{anonymousName}</span></p>
-            <p className="text-xs text-muted-foreground">{t.privacy}</p>
-          </div>
-        </div>
-
-        {/* Category */}
-        <div className="flex gap-2 mb-4 flex-wrap">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                category === cat.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground'
-              }`}
-            >
-              {cat.label[language]}
+        <div className="p-6 pb-0 flex-1 min-h-0 overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-heading font-bold">{t.title}</h2>
+            <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary">
+              <X className="w-5 h-5" />
             </button>
-          ))}
+          </div>
+
+          {/* Anonymous identity */}
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-secondary/50">
+            <Shield className="w-4 h-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">{t.posting}: <span className="text-primary">{anonymousName}</span></p>
+              <p className="text-xs text-muted-foreground">{t.privacy}</p>
+            </div>
+          </div>
+
+          {/* Category */}
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                  category === cat.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-muted-foreground'
+                }`}
+              >
+                {cat.label[language]}
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <textarea
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            placeholder={t.placeholder}
+            maxLength={500}
+            rows={4}
+            className="w-full p-4 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary transition-colors"
+            autoFocus
+          />
+          <p className="text-xs text-muted-foreground text-right mt-1 mb-4">{content.length}/500</p>
         </div>
 
-        {/* Content */}
-        <textarea
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          placeholder={t.placeholder}
-          maxLength={500}
-          rows={3}
-          className="w-full p-4 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary transition-colors"
-          autoFocus
-        />
-        <p className="text-xs text-muted-foreground text-right mt-1">{content.length}/500</p>
-
-        {/* Submit */}
-        <Button
-          onClick={handleSubmit}
-          disabled={!content.trim() || submitting}
-          className="w-full mt-4"
-          size="lg"
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {t.posting2}
-            </>
-          ) : (
-            <>
-              <Send className="w-4 h-4 mr-2" />
-              {t.post}
-            </>
-          )}
-        </Button>
+        {/* Sticky Submit */}
+        <div className="p-6 pt-4 border-t border-border bg-card">
+          <Button
+            onClick={handleSubmit}
+            disabled={!content.trim() || submitting}
+            className="w-full"
+            size="lg"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {t.posting2}
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                {t.post}
+              </>
+            )}
+          </Button>
+        </div>
       </motion.div>
     </motion.div>
   );
