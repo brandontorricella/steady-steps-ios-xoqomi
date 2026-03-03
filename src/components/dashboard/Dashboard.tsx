@@ -309,6 +309,13 @@ export const Dashboard = () => {
               <Check className="w-6 h-6 mr-2" />
               {t.checkIn}
             </Button>
+            <button
+              onClick={() => setShowBadDay(true)}
+              className="w-full mt-3 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2"
+            >
+              <Heart className="w-4 h-4" />
+              {language === 'en' ? 'Having a hard day?' : '¿Teniendo un día difícil?'}
+            </button>
           </motion.div>
         ) : (
           <motion.div
