@@ -148,6 +148,16 @@ export const Dashboard = () => {
         }
       }
       
+      // Show "Why" reminder if 2+ days since last check-in and user has a why
+      if (userProfile.whyText && userProfile.lastCheckinDate) {
+        const daysSinceCheckin = Math.floor(
+          (new Date().setHours(0,0,0,0) - new Date(userProfile.lastCheckinDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)
+        );
+        if (daysSinceCheckin >= 2) {
+          setShowWhyReminder(true);
+        }
+      }
+
       setProfile(userProfile);
       const todayCheckin = getTodayCheckin();
       setTodayCompleted(todayCheckin?.checkinCompleted || false);
