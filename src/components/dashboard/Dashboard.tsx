@@ -8,6 +8,7 @@ import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
 import { getUserProfile, getTodayCheckin, getWeeklyStats, saveUserProfile } from '@/lib/storage';
 import { Flame, Trophy, Check, Settings2, CalendarDays, Sparkles } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
+import { GraceDaysCard } from './GraceDaysCard';
 import { DailyTipCard } from './DailyTipCard';
 import { CoachTipCard } from './CoachTipCard';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
@@ -33,6 +34,7 @@ export const Dashboard = () => {
   const [showMicroLessons, setShowMicroLessons] = useState(false);
   const [showFlexibleProgress, setShowFlexibleProgress] = useState(false);
   const [showWeeklyReflection, setShowWeeklyReflection] = useState(false);
+  const [graceDayMessage, setGraceDayMessage] = useState<string | null>(null);
   const { language } = useLanguage();
   const { notification } = useNotificationLogic();
 
@@ -65,26 +67,79 @@ export const Dashboard = () => {
   useEffect(() => {
     const userProfile = getUserProfile();
     if (userProfile) {
+      // Reset grace days on 1st of the month
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const currentMonth = todayStr.substring(0, 7); // YYYY-MM
+      const lastResetMonth = userProfile.graceDaysLastReset?.substring(0, 7);
+      
+      if (lastResetMonth !== currentMonth) {
+        userProfile.graceDaysRemaining = 3;
+        userProfile.graceDaysLastReset = todayStr;
+        userProfile.graceDaysUsedDates = userProfile.graceDaysUsedDates.filter(
+          d => d.substring(0, 7) === currentMonth
+        );
+        saveUserProfile(userProfile);
+        if (user) {
+          supabase.from('profiles').update({
+            grace_days_remaining: 3,
+            grace_days_last_reset: todayStr,
+            grace_days_used_dates: [],
+          }).eq('id', user.id).then(() => {});
+        }
+      }
+
       // Check if streak should be reset (no check-in yesterday or today)
       if (userProfile.lastCheckinDate) {
-        const today = new Date();
         today.setHours(0, 0, 0, 0);
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
         const lastCheckin = new Date(userProfile.lastCheckinDate + 'T00:00:00');
         
         if (lastCheckin < yesterday && userProfile.currentStreak > 0) {
-          // Missed a full day — reset streak
-          userProfile.streakAtLoss = userProfile.currentStreak;
-          userProfile.currentStreak = 0;
-          saveUserProfile(userProfile);
+          // Count missed days between lastCheckin and yesterday
+          const missedDays = Math.floor((yesterday.getTime() - lastCheckin.getTime()) / (1000 * 60 * 60 * 24));
           
-          // Sync reset to database
-          if (user) {
-            supabase.from('profiles').update({
-              current_streak: 0,
-              streak_at_loss: userProfile.streakAtLoss,
-            }).eq('id', user.id).then(() => {});
+          if (missedDays <= userProfile.graceDaysRemaining) {
+            // Use grace days to protect streak
+            const usedDates: string[] = [];
+            for (let i = 1; i <= missedDays; i++) {
+              const missedDate = new Date(lastCheckin);
+              missedDate.setDate(missedDate.getDate() + i);
+              usedDates.push(missedDate.toISOString().split('T')[0]);
+            }
+            
+            userProfile.graceDaysRemaining -= missedDays;
+            userProfile.graceDaysUsedDates = [
+              ...userProfile.graceDaysUsedDates,
+              ...usedDates,
+            ];
+            saveUserProfile(userProfile);
+            
+            setGraceDayMessage(
+              language === 'en'
+                ? `We used ${missedDays} grace day${missedDays > 1 ? 's' : ''} to protect your streak 💚\nGrace days remaining: ${userProfile.graceDaysRemaining}/3`
+                : `Usamos ${missedDays} día${missedDays > 1 ? 's' : ''} de gracia para proteger tu racha 💚\nDías de gracia restantes: ${userProfile.graceDaysRemaining}/3`
+            );
+            
+            if (user) {
+              supabase.from('profiles').update({
+                grace_days_remaining: userProfile.graceDaysRemaining,
+                grace_days_used_dates: userProfile.graceDaysUsedDates,
+              }).eq('id', user.id).then(() => {});
+            }
+          } else {
+            // Not enough grace days — reset streak
+            userProfile.streakAtLoss = userProfile.currentStreak;
+            userProfile.currentStreak = 0;
+            saveUserProfile(userProfile);
+            
+            if (user) {
+              supabase.from('profiles').update({
+                current_streak: 0,
+                streak_at_loss: userProfile.streakAtLoss,
+              }).eq('id', user.id).then(() => {});
+            }
           }
         }
       }
@@ -93,7 +148,7 @@ export const Dashboard = () => {
       const todayCheckin = getTodayCheckin();
       setTodayCompleted(todayCheckin?.checkinCompleted || false);
     }
-  }, [showCheckin, user]);
+  }, [showCheckin, user, language]);
 
   if (!profile) return null;
 
@@ -204,6 +259,15 @@ export const Dashboard = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Grace Days */}
+        <div className="flex items-center justify-between">
+          <GraceDaysCard
+            remaining={profile.graceDaysRemaining}
+            message={graceDayMessage}
+            onDismissMessage={() => setGraceDayMessage(null)}
+          />
+        </div>
 
         {/* Community Nudge - shown before check-in */}
         {!todayCompleted && (

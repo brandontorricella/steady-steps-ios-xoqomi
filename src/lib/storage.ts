@@ -41,6 +41,9 @@ export const getDefaultUserProfile = (): UserProfile => ({
   biggestObstacle: 'time',
   dietPreference: 'no_preference',
   fitnessConfidence: 3,
+  graceDaysRemaining: 3,
+  graceDaysLastReset: new Date().toISOString().split('T')[0],
+  graceDaysUsedDates: [],
 });
 
 export const getUserProfile = (): UserProfile | null => {
