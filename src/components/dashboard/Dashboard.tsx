@@ -40,6 +40,7 @@ export const Dashboard = () => {
   const [graceDayMessage, setGraceDayMessage] = useState<string | null>(null);
   const [showWhyReminder, setShowWhyReminder] = useState(false);
   const [showWhyEditor, setShowWhyEditor] = useState(false);
+  const [showBadDay, setShowBadDay] = useState(false);
   const { language } = useLanguage();
   const { notification } = useNotificationLogic();
 
