@@ -260,6 +260,15 @@ export const Dashboard = () => {
           </div>
         </motion.div>
 
+        {/* Grace Days */}
+        <div className="flex items-center justify-between">
+          <GraceDaysCard
+            remaining={profile.graceDaysRemaining}
+            message={graceDayMessage}
+            onDismissMessage={() => setGraceDayMessage(null)}
+          />
+        </div>
+
         {/* Community Nudge - shown before check-in */}
         {!todayCompleted && (
           <CommunityNudge habitType="checkin" isVisible={true} />
