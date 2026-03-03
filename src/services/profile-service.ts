@@ -247,6 +247,9 @@ function mapDatabaseToProfile(data: DatabaseProfile): UserProfile {
     biggestObstacle: (data.biggest_obstacle as UserProfile['biggestObstacle']) || 'time',
     dietPreference: (data.diet_preference as UserProfile['dietPreference']) || 'no_preference',
     fitnessConfidence: data.fitness_confidence || 3,
+    graceDaysRemaining: (data as any).grace_days_remaining ?? 3,
+    graceDaysLastReset: (data as any).grace_days_last_reset || null,
+    graceDaysUsedDates: (data as any).grace_days_used_dates || [],
   };
 }
 
