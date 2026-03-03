@@ -14,6 +14,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { CoachPage } from "./pages/CoachPage";
 import { AuthPage } from "./pages/AuthPage";
 import { HabitLibraryPage } from "./pages/HabitLibraryPage";
+import { DiscoverHabitsPage } from "./components/habits/DiscoverHabitsPage";
 import { HiddenCaloriesPage } from "./pages/HiddenCaloriesPage";
 import { WeeklySummaryPage } from "./pages/WeeklySummaryPage";
 import { SubscriptionPage } from "./pages/SubscriptionPage";
