@@ -108,9 +108,28 @@ export const ComposePostModal = ({ onClose, onCreated }: ComposePostModalProps) 
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-heading font-bold">{t.title}</h2>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleSubmit}
+              disabled={!content.trim() || submitting}
+              size="sm"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  {t.posting2}
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-1" />
+                  {t.post}
+                </>
+              )}
+            </Button>
             <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary">
               <X className="w-5 h-5" />
             </button>
+          </div>
           </div>
 
           {/* Anonymous identity */}
@@ -152,8 +171,7 @@ export const ComposePostModal = ({ onClose, onCreated }: ComposePostModalProps) 
           <p className="text-xs text-muted-foreground text-right mt-1 mb-4">{content.length}/500</p>
         </div>
 
-        {/* Sticky Submit */}
-        <div className="p-6 pt-4 border-t border-border bg-card">
+        <div className="sticky bottom-0 z-10 p-6 pt-4 border-t border-border bg-card pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <Button
             onClick={handleSubmit}
             disabled={!content.trim() || submitting}
