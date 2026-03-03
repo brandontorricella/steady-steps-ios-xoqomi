@@ -171,8 +171,7 @@ export const ComposePostModal = ({ onClose, onCreated }: ComposePostModalProps) 
           <p className="text-xs text-muted-foreground text-right mt-1 mb-4">{content.length}/500</p>
         </div>
 
-        {/* Sticky Submit */}
-        <div className="p-6 pt-4 border-t border-border bg-card">
+        <div className="sticky bottom-0 z-10 p-6 pt-4 border-t border-border bg-card pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <Button
             onClick={handleSubmit}
             disabled={!content.trim() || submitting}
