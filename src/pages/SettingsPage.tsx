@@ -733,6 +733,25 @@ export const SettingsPage = () => {
         onClose={() => setShowExitFeedback(false)}
         onComplete={handleExitFeedbackComplete}
       />
+
+      {/* Why Editor Modal */}
+      <WhyEditorModal
+        isOpen={showWhyEditor}
+        currentText={profile.whyText}
+        onSave={async (text) => {
+          const updated = { ...profile, whyText: text, whyCreatedAt: new Date().toISOString() };
+          setProfile(updated);
+          saveUserProfile(updated);
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            await supabase.from('profiles').update({
+              why_text: text,
+              why_created_at: new Date().toISOString(),
+            }).eq('id', authUser.id);
+          }
+        }}
+        onClose={() => setShowWhyEditor(false)}
+      />
     </div>
   );
 };
