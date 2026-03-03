@@ -438,6 +438,37 @@ export const Dashboard = () => {
         isOpen={showWeeklyReflection}
         onClose={() => setShowWeeklyReflection(false)}
       />
+
+      {/* Why Reminder Modal */}
+      {profile.whyText && (
+        <WhyReminder
+          whyText={profile.whyText}
+          isVisible={showWhyReminder}
+          onClose={() => setShowWhyReminder(false)}
+          onEdit={() => {
+            setShowWhyReminder(false);
+            setShowWhyEditor(true);
+          }}
+        />
+      )}
+
+      {/* Why Editor Modal */}
+      <WhyEditorModal
+        isOpen={showWhyEditor}
+        currentText={profile.whyText}
+        onSave={(text) => {
+          const updated = { ...profile, whyText: text, whyCreatedAt: new Date().toISOString() };
+          setProfile(updated);
+          saveUserProfile(updated);
+          if (user) {
+            supabase.from('profiles').update({
+              why_text: text,
+              why_created_at: new Date().toISOString(),
+            }).eq('id', user.id).then(() => {});
+          }
+        }}
+        onClose={() => setShowWhyEditor(false)}
+      />
     </div>
   );
 };
