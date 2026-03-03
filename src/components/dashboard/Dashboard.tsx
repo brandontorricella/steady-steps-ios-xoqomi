@@ -12,7 +12,7 @@ import { BadDayFlow } from './BadDayFlow';
 import { GraceDaysCard } from './GraceDaysCard';
 import { WhyReminder } from './WhyReminder';
 import { WhyEditorModal } from './WhyEditorModal';
-import { DailyTipCard } from './DailyTipCard';
+
 import { CoachTipCard } from './CoachTipCard';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { MicroLessons, MicroLessonCard } from '@/components/education/MicroLessons';
