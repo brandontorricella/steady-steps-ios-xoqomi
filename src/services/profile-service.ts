@@ -250,6 +250,8 @@ function mapDatabaseToProfile(data: DatabaseProfile): UserProfile {
     graceDaysRemaining: (data as any).grace_days_remaining ?? 3,
     graceDaysLastReset: (data as any).grace_days_last_reset || null,
     graceDaysUsedDates: (data as any).grace_days_used_dates || [],
+    whyText: (data as any).why_text || null,
+    whyCreatedAt: (data as any).why_created_at || null,
   };
 }
 
