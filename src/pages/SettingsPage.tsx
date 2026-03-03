@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
- import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle, LogOut, RefreshCw, Heart } from 'lucide-react';
+ import { ArrowLeft, Bell, Trash2, AlertTriangle, Download, Shield, CreditCard, XCircle, FileText, HelpCircle, ChevronRight, CheckCircle, LogOut, RefreshCw, Heart, Mail } from 'lucide-react';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
