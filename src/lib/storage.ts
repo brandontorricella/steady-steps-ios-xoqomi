@@ -44,6 +44,8 @@ export const getDefaultUserProfile = (): UserProfile => ({
   graceDaysRemaining: 3,
   graceDaysLastReset: new Date().toISOString().split('T')[0],
   graceDaysUsedDates: [],
+  whyText: null,
+  whyCreatedAt: null,
 });
 
 export const getUserProfile = (): UserProfile | null => {

@@ -295,6 +295,8 @@ function mapProfileToDatabase(profile: Partial<UserProfile>): Record<string, unk
   if (profile.graceDaysRemaining !== undefined) mapping.grace_days_remaining = profile.graceDaysRemaining;
   if (profile.graceDaysLastReset !== undefined) mapping.grace_days_last_reset = profile.graceDaysLastReset;
   if (profile.graceDaysUsedDates !== undefined) mapping.grace_days_used_dates = profile.graceDaysUsedDates;
+  if (profile.whyText !== undefined) mapping.why_text = profile.whyText;
+  if (profile.whyCreatedAt !== undefined) mapping.why_created_at = profile.whyCreatedAt;
   
   return mapping;
 }
