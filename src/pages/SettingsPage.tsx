@@ -466,6 +466,44 @@ export const SettingsPage = () => {
           </div>
         </motion.section>
 
+        {/* My Motivation */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.025 }}
+          className="p-6 rounded-2xl border-2 border-border bg-card"
+        >
+          <h2 className="font-heading font-semibold mb-4 flex items-center gap-2">
+            <Heart className="w-5 h-5" />
+            {language === 'en' ? 'My Motivation' : 'Mi Motivación'}
+          </h2>
+          {profile.whyText ? (
+            <div className="space-y-3">
+              <blockquote className="text-sm italic text-muted-foreground border-l-4 border-primary/30 pl-3">
+                "{profile.whyText}"
+              </blockquote>
+              <button
+                onClick={() => setShowWhyEditor(true)}
+                className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+              >
+                {language === 'en' ? 'Edit My Why' : 'Editar Mi Por Qué'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowWhyEditor(true)}
+              className="w-full p-4 rounded-xl border border-dashed border-primary/30 bg-primary/5 text-center"
+            >
+              <p className="text-sm font-medium text-primary">
+                {language === 'en' ? 'Add your personal motivation' : 'Agrega tu motivación personal'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {language === 'en' ? 'Your anchor when motivation is low' : 'Tu ancla cuando la motivación es baja'}
+              </p>
+            </button>
+          )}
+        </motion.section>
+
         {/* Subscription */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
