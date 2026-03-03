@@ -101,7 +101,7 @@ export const ComposePostModal = ({ onClose, onCreated }: ComposePostModalProps) 
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-lg mx-auto bg-card rounded-t-3xl border-t border-border p-6"
+        className="w-full max-w-lg mx-auto bg-card rounded-t-3xl border-t border-border p-6 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -122,7 +122,7 @@ export const ComposePostModal = ({ onClose, onCreated }: ComposePostModalProps) 
         </div>
 
         {/* Category */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 flex-wrap">
           {CATEGORIES.map(cat => (
             <button
               key={cat.id}
@@ -144,7 +144,7 @@ export const ComposePostModal = ({ onClose, onCreated }: ComposePostModalProps) 
           onChange={e => setContent(e.target.value)}
           placeholder={t.placeholder}
           maxLength={500}
-          rows={4}
+          rows={3}
           className="w-full p-4 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary transition-colors"
           autoFocus
         />
