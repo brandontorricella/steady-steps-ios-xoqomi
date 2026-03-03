@@ -74,16 +74,17 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
   // 4: Goal
   // 5: Activity Level
   // 6: Nutrition Challenge
-  // 7: Biggest Obstacle (NEW)
-  // 8: Diet Preference (NEW)
-  // 9: Confidence Level (NEW)
-  // 10: Time Commitment
-  // 11: Meet Coach
-  // 12: Notifications
-  // 13: Terms & Privacy
-  // 14: Payment
-  // 15: Starting Point
-  // 16: First Day
+  // 7: Biggest Obstacle
+  // 8: Diet Preference
+  // 9: Confidence Level
+  // 10: Why I'm Doing This (NEW)
+  // 11: Time Commitment
+  // 12: Meet Coach
+  // 13: Notifications
+  // 14: Terms & Privacy
+  // 15: Payment
+  // 16: Starting Point
+  // 17: First Day
   const screens = [
     <LanguageScreen key="language" onNext={handleNext} />,
     <WelcomeScreen key="welcome" onNext={handleNext} />,
