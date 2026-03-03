@@ -96,6 +96,7 @@ export const OnboardingContainer = ({ onComplete }: OnboardingContainerProps) =>
     <ObstacleScreen key="obstacle" value={profile.biggestObstacle} onChange={(v) => updateProfile({ biggestObstacle: v })} onNext={handleNext} />,
     <DietPreferenceScreen key="diet" value={profile.dietPreference} onChange={(v) => updateProfile({ dietPreference: v })} onNext={handleNext} />,
     <ConfidenceScreen key="confidence" value={profile.fitnessConfidence} onChange={(v) => updateProfile({ fitnessConfidence: v })} onNext={handleNext} />,
+    <WhyScreen key="why" value={profile.whyText} onChange={(v) => updateProfile({ whyText: v, whyCreatedAt: new Date().toISOString() })} onNext={handleNext} />,
     <TimeCommitmentScreen key="time" value={profile.dailyTimeCommitment} onChange={(v) => updateProfile({ dailyTimeCommitment: v })} onNext={handleNext} />,
     <MeetCoachScreen key="coach" onNext={handleNext} />,
     <NotificationScreen 
