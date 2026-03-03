@@ -250,6 +250,7 @@ export const ProgressPage = () => {
             </div>
           </div>
         </motion.div>
+      </main>
 
       <BottomNavigation />
     </div>
