@@ -220,6 +220,8 @@ export type Database = {
           trial_start_date: string | null
           updated_at: string | null
           weekly_summary_enabled: boolean | null
+          why_created_at: string | null
+          why_text: string | null
         }
         Insert: {
           active_library_habits?: string[] | null
@@ -267,6 +269,8 @@ export type Database = {
           trial_start_date?: string | null
           updated_at?: string | null
           weekly_summary_enabled?: boolean | null
+          why_created_at?: string | null
+          why_text?: string | null
         }
         Update: {
           active_library_habits?: string[] | null
@@ -314,6 +318,8 @@ export type Database = {
           trial_start_date?: string | null
           updated_at?: string | null
           weekly_summary_enabled?: boolean | null
+          why_created_at?: string | null
+          why_text?: string | null
         }
         Relationships: []
       }
