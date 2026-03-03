@@ -202,7 +202,7 @@ export const ProgressPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="grid grid-cols-3 gap-3"
+          className="grid grid-cols-2 gap-3"
         >
           <Button
             variant="outline"
@@ -211,14 +211,6 @@ export const ProgressPage = () => {
           >
             <Award className="w-6 h-6 text-primary" />
             <span className="text-xs">Badges</span>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/habit-library')}
-            className="h-auto py-4 flex flex-col gap-2"
-          >
-            <BookOpen className="w-6 h-6 text-primary" />
-            <span className="text-xs">Habit Library</span>
           </Button>
           <Button
             variant="outline"
