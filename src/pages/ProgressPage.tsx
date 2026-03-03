@@ -68,7 +68,7 @@ export const ProgressPage = () => {
               className="p-6 rounded-2xl border-2 border-border bg-card"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-heading font-semibold">{t('progress.thisWeek', 'This Week')}</h3>
+                <h3 className="font-heading font-semibold">{t('progress.thisWeek') || 'This Week'}</h3>
                 <span className="text-sm text-muted-foreground">{weeklyStats.checkins}/7 days</span>
               </div>
               <div className="h-3 rounded-full bg-secondary overflow-hidden">
