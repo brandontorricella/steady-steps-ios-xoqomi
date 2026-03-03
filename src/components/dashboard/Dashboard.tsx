@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
 import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
-import { getUserProfile, getTodayCheckin, getWeeklyStats } from '@/lib/storage';
+import { getUserProfile, getTodayCheckin, getWeeklyStats, saveUserProfile } from '@/lib/storage';
 import { Flame, Trophy, Check, Settings2, CalendarDays, Sparkles } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
 import { DailyTipCard } from './DailyTipCard';
@@ -65,11 +65,35 @@ export const Dashboard = () => {
   useEffect(() => {
     const userProfile = getUserProfile();
     if (userProfile) {
+      // Check if streak should be reset (no check-in yesterday or today)
+      if (userProfile.lastCheckinDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const lastCheckin = new Date(userProfile.lastCheckinDate + 'T00:00:00');
+        
+        if (lastCheckin < yesterday && userProfile.currentStreak > 0) {
+          // Missed a full day — reset streak
+          userProfile.streakAtLoss = userProfile.currentStreak;
+          userProfile.currentStreak = 0;
+          saveUserProfile(userProfile);
+          
+          // Sync reset to database
+          if (user) {
+            supabase.from('profiles').update({
+              current_streak: 0,
+              streak_at_loss: userProfile.streakAtLoss,
+            }).eq('id', user.id).then(() => {});
+          }
+        }
+      }
+      
       setProfile(userProfile);
       const todayCheckin = getTodayCheckin();
       setTodayCompleted(todayCheckin?.checkinCompleted || false);
     }
-  }, [showCheckin]);
+  }, [showCheckin, user]);
 
   if (!profile) return null;
 

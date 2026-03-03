@@ -64,7 +64,25 @@ export const DailyCheckinFlow = ({ profile, onComplete }: DailyCheckinFlowProps)
 
   const handleSubmit = async (mood: Mood | null) => {
     const today = new Date().toISOString().split('T')[0];
-    const newStreak = profile.currentStreak + 1;
+    
+    // Determine if streak continues or resets
+    let newStreak = 1; // Default: start fresh
+    if (profile.lastCheckinDate) {
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const yesterday = new Date(todayDate);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const lastCheckin = new Date(profile.lastCheckinDate + 'T00:00:00');
+      
+      if (lastCheckin.getTime() === yesterday.getTime()) {
+        // Checked in yesterday — continue streak
+        newStreak = profile.currentStreak + 1;
+      } else if (lastCheckin.getTime() === todayDate.getTime()) {
+        // Already checked in today — keep current streak
+        newStreak = profile.currentStreak;
+      }
+      // Otherwise lastCheckin < yesterday → streak resets to 1
+    }
     const points = calculatePoints(activityCompleted || false, nutritionResponses, newStreak);
     
     // Check for perfect day
