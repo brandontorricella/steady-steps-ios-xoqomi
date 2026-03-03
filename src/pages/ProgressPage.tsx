@@ -57,6 +57,43 @@ export const ProgressPage = () => {
       </header>
 
       <main className="px-6 py-6 space-y-6">
+        {/* Weekly Summary */}
+        {(() => {
+          const weeklyStats = getWeeklyStats();
+          const weeklyProgress = (weeklyStats.checkins / 7) * 100;
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 rounded-2xl border-2 border-border bg-card"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-heading font-semibold">{t('progress.thisWeek', 'This Week')}</h3>
+                <span className="text-sm text-muted-foreground">{weeklyStats.checkins}/7 days</span>
+              </div>
+              <div className="h-3 rounded-full bg-secondary overflow-hidden">
+                <motion.div 
+                  className="h-full gradient-primary rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${weeklyProgress}%` }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                />
+              </div>
+              <div className="flex justify-between mt-4 text-sm text-muted-foreground">
+                <span>{weeklyStats.activityCompletions} activities</span>
+                <span>{weeklyStats.nutritionScore} nutrition habits</span>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/weekly-summary')}
+                className="w-full mt-4"
+              >
+                <CalendarDays className="w-4 h-4 mr-2" />
+                Weekly Summary
+              </Button>
+            </motion.div>
+          );
+        })()}
         {/* Stats Overview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
