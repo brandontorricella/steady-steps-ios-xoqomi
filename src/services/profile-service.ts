@@ -252,6 +252,7 @@ function mapDatabaseToProfile(data: DatabaseProfile): UserProfile {
     graceDaysUsedDates: (data as any).grace_days_used_dates || [],
     whyText: (data as any).why_text || null,
     whyCreatedAt: (data as any).why_created_at || null,
+    badDaysCount: (data as any).bad_days_count || 0,
   };
 }
 
