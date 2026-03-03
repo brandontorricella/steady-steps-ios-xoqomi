@@ -24,6 +24,7 @@ import { ProgressInsights } from './ProgressInsights';
 import { WeeklyReflectionModal } from './WeeklyReflectionModal';
 import { NotBehindBanner } from './NotBehindBanner';
 import { useNotificationLogic } from '@/components/notifications/NotificationLogic';
+import { MilestoneMessagePrompt } from '@/components/messages/MilestoneMessagePrompt';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -252,6 +253,9 @@ export const Dashboard = () => {
             </div>
           </motion.div>
         )}
+
+        {/* Milestone Message Prompt / Delivery */}
+        <MilestoneMessagePrompt />
 
         {/* Not Behind Banner */}
         <NotBehindBanner />

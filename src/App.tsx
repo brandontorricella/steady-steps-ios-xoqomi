@@ -20,6 +20,7 @@ import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { LegalPage } from "./pages/LegalPage";
 import { HelpPage } from "./pages/HelpPage";
 import { CommunityPage } from "./pages/CommunityPage";
+import { FutureMessagesPage } from "./components/messages/FutureMessagesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/subscription" element={<SubscriptionPage />} />
                 <Route path="/legal" element={<LegalPage />} />
                 <Route path="/help" element={<HelpPage />} />
+                <Route path="/messages" element={<FutureMessagesPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
