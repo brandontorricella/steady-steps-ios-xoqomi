@@ -57,6 +57,8 @@ export interface UserProfile {
   // Why I'm Doing This
   whyText: string | null;
   whyCreatedAt: string | null;
+  // Bad day tracking
+  badDaysCount: number;
 }
 
 export interface DailyCheckin {

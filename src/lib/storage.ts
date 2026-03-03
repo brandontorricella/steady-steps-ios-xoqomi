@@ -46,6 +46,7 @@ export const getDefaultUserProfile = (): UserProfile => ({
   graceDaysUsedDates: [],
   whyText: null,
   whyCreatedAt: null,
+  badDaysCount: 0,
 });
 
 export const getUserProfile = (): UserProfile | null => {
