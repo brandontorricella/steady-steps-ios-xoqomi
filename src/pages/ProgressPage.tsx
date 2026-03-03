@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, subMonths, addMonths } from 'date-fns';
 import { getDailyCheckins, getUserProfile, getWeeklyStats } from '@/lib/storage';
 import { DailyCheckin, UserProfile, LEVELS, getStageDescription } from '@/lib/types';
-import { ArrowLeft, ChevronLeft, ChevronRight, Check, Minus, Award, UtensilsCrossed, CalendarDays } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Check, Minus, Award, CalendarDays } from 'lucide-react';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
