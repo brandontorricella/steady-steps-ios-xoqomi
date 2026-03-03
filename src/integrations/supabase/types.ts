@@ -176,6 +176,50 @@ export type Database = {
           },
         ]
       }
+      future_messages: {
+        Row: {
+          content: string
+          created_at: string
+          current_day_when_created: number
+          delivered: boolean
+          delivered_at: string | null
+          delivery_day: number
+          id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          current_day_when_created?: number
+          delivered?: boolean
+          delivered_at?: string | null
+          delivery_day: number
+          id?: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          current_day_when_created?: number
+          delivered?: boolean
+          delivered_at?: string | null
+          delivery_day?: number
+          id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "future_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_library_habits: string[] | null
