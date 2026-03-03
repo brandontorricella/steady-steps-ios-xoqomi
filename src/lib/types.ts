@@ -50,6 +50,10 @@ export interface UserProfile {
   biggestObstacle: BiggestObstacle;
   dietPreference: DietPreference;
   fitnessConfidence: number; // 1-5 scale
+  // Grace days
+  graceDaysRemaining: number;
+  graceDaysLastReset: string | null;
+  graceDaysUsedDates: string[];
 }
 
 export interface DailyCheckin {
