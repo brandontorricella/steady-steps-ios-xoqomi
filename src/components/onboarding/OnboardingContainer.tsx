@@ -11,6 +11,7 @@ import { TimeCommitmentScreen } from './screens/TimeCommitmentScreen';
 import { ObstacleScreen } from './screens/ObstacleScreen';
 import { DietPreferenceScreen } from './screens/DietPreferenceScreen';
 import { ConfidenceScreen } from './screens/ConfidenceScreen';
+import { WhyScreen } from './screens/WhyScreen';
 import { MeetCoachScreen } from './screens/MeetCoachScreen';
 import { NotificationScreen } from './screens/NotificationScreen';
 import { TermsScreen } from './screens/TermsScreen';
