@@ -220,6 +220,44 @@ export type Database = {
           },
         ]
       }
+      habit_ratings: {
+        Row: {
+          created_at: string
+          habit_id: string
+          id: string
+          rating: number
+          review_text: string | null
+          user_id: string
+          would_recommend: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          habit_id: string
+          id?: string
+          rating: number
+          review_text?: string | null
+          user_id: string
+          would_recommend?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          habit_id?: string
+          id?: string
+          rating?: number
+          review_text?: string | null
+          user_id?: string
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_ratings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_library_habits: string[] | null
