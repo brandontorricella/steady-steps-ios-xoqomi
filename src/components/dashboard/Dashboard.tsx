@@ -240,19 +240,6 @@ export const Dashboard = () => {
 
       {/* Main Content */}
       <main className="px-6 space-y-6 mt-6">
-        {/* Gentle Notification Banner */}
-        {notification && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-4 rounded-2xl bg-gradient-to-r from-secondary to-accent/10 border border-border"
-          >
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <p className="text-sm">{notification.message}</p>
-            </div>
-          </motion.div>
-        )}
 
         {/* Milestone Message Prompt / Delivery */}
         <MilestoneMessagePrompt />
