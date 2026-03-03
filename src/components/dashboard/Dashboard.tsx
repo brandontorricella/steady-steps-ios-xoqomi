@@ -342,38 +342,8 @@ export const Dashboard = () => {
           <QuickHabitLog />
         </motion.div>
 
-        {/* Weekly Progress */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="p-6 rounded-2xl border-2 border-border bg-card"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-heading font-semibold">{t.thisWeek}</h3>
-            <span className="text-sm text-muted-foreground">{weeklyStats.checkins}/7 {t.days}</span>
-          </div>
-          <div className="h-3 rounded-full bg-secondary overflow-hidden">
-            <motion.div 
-              className="h-full gradient-primary rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${weeklyProgress}%` }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            />
-          </div>
-          <div className="flex justify-between mt-4 text-sm text-muted-foreground">
-            <span>{weeklyStats.activityCompletions} {t.activities}</span>
-            <span>{weeklyStats.nutritionScore} {t.nutritionHabits}</span>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/weekly-summary')}
-            className="w-full mt-4"
-          >
-            <CalendarDays className="w-4 h-4 mr-2" />
-            {t.weeklySummary}
-          </Button>
-        </motion.div>
+
+
 
         {/* Level & Stage with Adjust Button */}
         <motion.div
