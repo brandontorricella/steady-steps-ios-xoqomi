@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Button } from '@/components/ui/button';
 import { UserProfile, LEVELS, getStageDescription } from '@/lib/types';
-import { getUserProfile, getTodayCheckin, getWeeklyStats } from '@/lib/storage';
+import { getUserProfile, getTodayCheckin, getWeeklyStats, saveUserProfile } from '@/lib/storage';
 import { Flame, Trophy, Check, Settings2, CalendarDays, Sparkles } from 'lucide-react';
 import { DailyCheckinFlow } from './DailyCheckinFlow';
 import { DailyTipCard } from './DailyTipCard';
