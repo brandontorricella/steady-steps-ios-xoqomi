@@ -191,6 +191,9 @@ export type Database = {
           evening_reminder_time: string | null
           first_name: string | null
           fitness_confidence: number | null
+          grace_days_last_reset: string | null
+          grace_days_remaining: number
+          grace_days_used_dates: string[] | null
           id: string
           language: string | null
           last_checkin_date: string | null
@@ -235,6 +238,9 @@ export type Database = {
           evening_reminder_time?: string | null
           first_name?: string | null
           fitness_confidence?: number | null
+          grace_days_last_reset?: string | null
+          grace_days_remaining?: number
+          grace_days_used_dates?: string[] | null
           id: string
           language?: string | null
           last_checkin_date?: string | null
@@ -279,6 +285,9 @@ export type Database = {
           evening_reminder_time?: string | null
           first_name?: string | null
           fitness_confidence?: number | null
+          grace_days_last_reset?: string | null
+          grace_days_remaining?: number
+          grace_days_used_dates?: string[] | null
           id?: string
           language?: string | null
           last_checkin_date?: string | null
