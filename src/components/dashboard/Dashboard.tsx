@@ -177,6 +177,10 @@ export const Dashboard = () => {
   const weeklyStats = getWeeklyStats();
   const weeklyProgress = (weeklyStats.checkins / 7) * 100;
 
+  if (showBadDay) {
+    return <BadDayFlow profile={profile} onComplete={() => setShowBadDay(false)} onCancel={() => setShowBadDay(false)} />;
+  }
+
   if (showCheckin) {
     return <DailyCheckinFlow profile={profile} onComplete={() => setShowCheckin(false)} />;
   }
