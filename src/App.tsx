@@ -22,6 +22,7 @@ import { LegalPage } from "./pages/LegalPage";
 import { HelpPage } from "./pages/HelpPage";
 import { CommunityPage } from "./pages/CommunityPage";
 import { FutureMessagesPage } from "./components/messages/FutureMessagesPage";
+import ApproachPage from "./pages/ApproachPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
