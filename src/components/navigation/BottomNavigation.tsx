@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 const tabs = [
   { id: 'home', icon: Home, label: 'Home', path: '/' },
   { id: 'discover', icon: Compass, label: 'Discover', path: '/discover' },
+  { id: 'approach', icon: Sprout, label: 'Approach', path: '/approach' },
   { id: 'coach', icon: MessageCircleHeart, label: 'Coach', path: '/coach' },
   { id: 'community', icon: Users, label: 'Community', path: '/community' },
-  { id: 'approach', icon: Sprout, label: 'Approach', path: '/approach' },
   { id: 'progress', icon: TrendingUp, label: 'Progress', path: '/progress' },
   { id: 'profile', icon: User, label: 'Profile', path: '/settings' },
 ];
