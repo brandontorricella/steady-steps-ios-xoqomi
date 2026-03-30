@@ -1,4 +1,4 @@
-import { Home, TrendingUp, MessageCircleHeart, Compass, Users, User } from 'lucide-react';
+import { Home, TrendingUp, MessageCircleHeart, Compass, Users, User, Sprout } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
